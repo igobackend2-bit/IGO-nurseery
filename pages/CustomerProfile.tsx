@@ -1027,6 +1027,7 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
         </div>
       )}
     </div>
+    </div>
   );
 };
 
