@@ -36,3 +36,9 @@ test_write.txt
 pages/*.backup
 IGO_Nursery_SEO_Audit_Updated.docx
 ~$*.docx
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+.env.development
