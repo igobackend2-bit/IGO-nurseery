@@ -201,7 +201,7 @@ const Landscape: React.FC = () => {
             <img 
               src={img} 
               className="w-full h-full object-cover scale-105 animate-pulse-slow" 
-              alt={`Landscape Slide ${idx}`}
+              alt={["Professional landscape garden design by IGO Nursery", "Luxury resort estate landscaping — IGO Nursery portfolio", "Premium villa garden design with native plants — IGO Nursery", "Modern office biophilic interior garden by IGO Nursery"][idx] || `IGO Nursery landscape design project ${idx + 1}`}
             />
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
@@ -564,7 +564,7 @@ const Landscape: React.FC = () => {
                 <img 
                   src={CASE_STUDIES[selectedCaseStudy].bg} 
                   className="w-full h-full object-cover animate-pulse-slow" 
-                  alt={selectedCaseStudy} 
+                  alt={`IGO Nursery case study — ${CASE_STUDIES[selectedCaseStudy].title} landscape project`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-igo-dark/80 via-transparent to-transparent" />
                 <div className="absolute bottom-10 left-10 text-white">
@@ -613,8 +613,8 @@ const Landscape: React.FC = () => {
                 </button>
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => setSelectedCaseStudy(null)}
               className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur rounded-full text-white hover:bg-white/20 transition-all lg:hidden"
             >

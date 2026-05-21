@@ -22,6 +22,7 @@ interface SimulatedEmail {
   body: string;
   isRead: boolean;
   timestamp: string;
+  leadId?: string;
 }
 
 const MailHub: React.FC = () => {

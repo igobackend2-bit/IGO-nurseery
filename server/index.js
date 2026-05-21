@@ -485,10 +485,9 @@ export const handler = async (request, response) => {
       const body = await readJsonBody(request);
       if (body.email) body.email = body.email.trim().toLowerCase();
       if (body.password) body.password = body.password.trim();
-      console.log('👤 Staged Signup Request:', JSON.stringify(body, null, 2));
-      
+      // Note: do not log body here — it contains the user's password
+
       if (!body.email || !body.password || !body.name) {
-        console.log('❌ Signup rejected: Missing required fields');
         sendJson(response, 400, { message: 'Email, name and password are required.' });
         return;
       }

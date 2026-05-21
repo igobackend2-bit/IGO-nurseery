@@ -93,8 +93,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         {/* Background Layer */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1599423300746-b62533397364?auto=format&fit=crop&q=80&w=2000" 
-            alt="Advanced Polyhouse" 
+            src="https://images.unsplash.com/photo-1599423300746-b62533397364?auto=format&fit=crop&q=80&w=2000"
+            alt="Advanced polyhouse facility at IGO Nursery — precision AgriTech greenhouse"
             className="w-full h-full object-cover opacity-30 grayscale"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-igo-dark via-transparent to-igo-dark/40"></div>
@@ -111,7 +111,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </div>
               
               <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter">
-                NATURE <br />
+                <span className="sr-only">Premium Nursery Plants &amp; AgriTech Greenery — IGO Nursery: </span>NATURE <br />
                 <span className="text-gradient">ENGINEERED.</span>
               </h1>
               
@@ -167,9 +167,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 {/* Hero Main Image Circle */}
                 <div className="w-[80%] h-[80%] mx-auto rounded-full border-[20px] border-white/5 overflow-hidden p-4">
                   <img 
-                    src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=800" 
+                    src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=800"
                     className="w-full h-full object-cover rounded-full"
-                    alt="Main Plant"
+                    alt="Premium nursery plant grown at IGO Nursery — healthy and lab-certified"
                   />
                 </div>
               </div>
@@ -182,8 +182,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       <section className="bg-gray-50 py-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 mb-12 flex justify-between items-end">
             <div>
-                <h2 className="text-sm uppercase tracking-[0.4em] font-black text-igo-lime mb-2">Portfolio Feed</h2>
-                <p className="text-4xl font-black text-igo-dark tracking-tighter">Live from our Sites.</p>
+                <p className="text-sm uppercase tracking-[0.4em] font-black text-igo-lime mb-2">Portfolio Feed</p>
+                <h2 className="text-4xl font-black text-igo-dark tracking-tighter">Live from our Sites.</h2>
             </div>
             <button onClick={() => handleNavigate(Page.Landscape)} className="text-xs font-black uppercase tracking-widest text-igo-muted hover:text-igo-dark transition-colors border-b-2 border-transparent hover:border-igo-dark pb-1">View All Case Studies</button>
         </div>
@@ -212,8 +212,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       {/* Industrial Segment Cards */}
       <section className="py-32 max-w-7xl mx-auto px-4">
         <div className="text-center space-y-4 mb-20">
-          <h2 className="text-sm uppercase tracking-[0.4em] font-black text-igo-lime">The IGO Collective</h2>
-          <p className="text-4xl md:text-5xl font-black text-igo-dark tracking-tighter">Full-Stack Greenery Services.</p>
+          <p className="text-sm uppercase tracking-[0.4em] font-black text-igo-lime">The IGO Collective</p>
+          <h2 className="text-4xl md:text-5xl font-black text-igo-dark tracking-tighter">Full-Stack Greenery Services.</h2>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -288,7 +288,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <div className="relative z-10">
             <img
               src="/images/indoor/monstera.png"
-              alt="Featured product collection"
+              alt="Monstera indoor plant — featured from IGO Nursery product collection"
               className="w-full h-[320px] md:h-[380px] object-cover rounded-3xl border border-white/10"
             />
           </div>
@@ -329,8 +329,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
             <div className="relative">
               <div className="grid grid-cols-2 gap-4">
-                <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover" alt="Lab 1" />
-                <img src="https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover mt-12" alt="Lab 2" />
+                <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover" alt="IGO Nursery AgriTech lab — soil and plant research facility" />
+                <img src="https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover mt-12" alt="Precision agriculture trials at IGO Nursery Muttukadu campus" />
               </div>
               {/* Telemetry Box */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-igo-lime rounded-full p-1 shadow-[0_0_80px_rgba(132,204,22,0.4)] animate-pulse flex items-center justify-center">

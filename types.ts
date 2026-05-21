@@ -50,6 +50,7 @@ export interface Lead {
   status: 'new' | 'contacted' | 'resolved' | 'approved' | 'rejected' | 'pending' | 'accepting' | 'alternate-days';
   createdAt: string;
   planName?: string;
+  selectedPlan?: string;
   amount?: number;
   reason?: string;
   adminDecision?: string;
@@ -119,6 +120,7 @@ export interface Order {
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   estimatedDelivery: string;
+  deletionRequested?: boolean;
 }
 
 export interface Customer {
@@ -134,6 +136,7 @@ export interface Notification {
   customerId: number;
   orderNumber: string;
   type: string;
+  title?: string;
   message: string;
   isRead: boolean;
   createdAt: string;
