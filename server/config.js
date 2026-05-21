@@ -18,6 +18,6 @@ export const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
 export const SMTP_USER = process.env.SMTP_USER || 'igonursery@gmail.com';
 export const SMTP_PASS = process.env.SMTP_PASS || 'biqo eqde vsgu oobw';
 
-// Supabase Configuration (Required for Vercel/Production)
-export const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://coeqpwckaepquphacwws.supabase.co';
-export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+// Supabase Configuration
+export const SUPABASE_URL = process.env.SUPABASE_URL || 'https://celsdwfmogpejwzbkxad.supabase.co';
+export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlbHNkd2Ztb2dwZWp3emJreGFkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzYxNDY4NiwiZXhwIjoyMDkzMTkwNjg2fQ.pyNKC2Sq5_6oy7I7aG0jfo4jzueND1UghG6Xiw0Fn4c';

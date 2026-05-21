@@ -936,10 +936,10 @@ export const handler = async (request, response) => {
 
 // Standard Node.js Server Startup
 const server = http.createServer(handler);
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  server.listen(API_PORT, '127.0.0.1', () => {
-    console.log(`IGO backend API running on http://127.0.0.1:${API_PORT}`);
-  });
-}
+// Use Railway's PORT env var, fallback to API_PORT for local dev
+const LISTEN_PORT = Number(process.env.PORT || API_PORT);
+server.listen(LISTEN_PORT, '0.0.0.0', () => {
+  console.log(`IGO backend API running on port ${LISTEN_PORT}`);
+});
 
 export default handler;
