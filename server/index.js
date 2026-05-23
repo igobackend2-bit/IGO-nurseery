@@ -485,10 +485,9 @@ export const handler = async (request, response) => {
       const body = await readJsonBody(request);
       if (body.email) body.email = body.email.trim().toLowerCase();
       if (body.password) body.password = body.password.trim();
-      console.log('👤 Staged Signup Request:', JSON.stringify(body, null, 2));
-      
+      // Note: do not log body here — it contains the user's password
+
       if (!body.email || !body.password || !body.name) {
-        console.log('❌ Signup rejected: Missing required fields');
         sendJson(response, 400, { message: 'Email, name and password are required.' });
         return;
       }
@@ -937,10 +936,10 @@ export const handler = async (request, response) => {
 
 // Standard Node.js Server Startup
 const server = http.createServer(handler);
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  server.listen(API_PORT, '127.0.0.1', () => {
-    console.log(`IGO backend API running on http://127.0.0.1:${API_PORT}`);
-  });
-}
+// Use Railway's PORT env var, fallback to API_PORT for local dev
+const LISTEN_PORT = Number(process.env.PORT || API_PORT);
+server.listen(LISTEN_PORT, '0.0.0.0', () => {
+  console.log(`IGO backend API running on port ${LISTEN_PORT}`);
+});
 
 export default handler;

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CartItem, Order, Page, Product as NurseryProduct, StoreProduct } from './types';
+import { CartItem, Customer, Notification, Order, Page, Product as NurseryProduct, StoreProduct } from './types';
 import SiteHeader from './components/SiteHeader';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -49,7 +49,7 @@ import {
   adminDeleteCustomer,
 } from './services/api';
 import { customerApi } from './services/customerApi';
-import { Customer, Notification } from './types';
+
 import NotificationPopup from './components/NotificationPopup';
 
 const DEFAULT_ADMIN_EMAIL = 'admin@igo.local';
@@ -898,6 +898,7 @@ const MainApp: React.FC = () => {
       case Page.Product:
         return (
           <Product
+            products={[]}
             selectedSlug={routeParam}
             onOpenProduct={(slug) => navigateTo(Page.Product, slug)}
             onAddToCart={handleAddToCart}
