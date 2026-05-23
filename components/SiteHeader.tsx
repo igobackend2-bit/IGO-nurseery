@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart,
   Menu,
@@ -46,6 +46,16 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
   onRefreshNotifications,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -87,25 +97,31 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-cover bg-center antialiased"
-        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/images/branding/header-bg.png')" }}
+        className={`fixed top-0 left-0 right-0 z-50 antialiased transition-all duration-300 ${
+          isScrolled
+            ? 'bg-white shadow-lg border-b border-gray-200'
+            : 'border-b border-gray-100 bg-cover bg-center'
+        }`}
+        style={!isScrolled ? { backgroundImage: "linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)), url('/images/branding/header-bg.png')" } : {}}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
-            <div className="flex items-center gap-3 cursor-pointer group py-2 mr-8" onClick={() => handleNav(Page.Home)}>
-              <img
-                src="/images/branding/igo-logo.jpg"
-                alt="IGO Agritechfarms"
-                className="h-16 w-auto rounded-xl border-2 border-white shadow-xl object-contain bg-white transition-all group-hover:scale-105 group-hover:rotate-1"
-              />
+          <div className="flex justify-between items-center h-24 gap-4 xl:gap-8">
+            <div className="flex items-center gap-4 cursor-pointer group py-2 shrink-0" onClick={() => handleNav(Page.Home)}>
+              <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-sm border border-gray-100/50 bg-white group-hover:shadow-md transition-all">
+                <img
+                  src="/images/branding/igo-logo.jpg"
+                  alt="IGO Agritechfarms"
+                  className="w-full h-full object-cover scale-[1.35] transition-all duration-300 group-hover:scale-[1.45] group-hover:rotate-3 mix-blend-multiply"
+                />
+              </div>
             </div>
 
-            <nav className="hidden lg:flex flex-1 justify-center items-center gap-x-8 xl:gap-x-12">
+            <nav className="hidden lg:flex flex-1 justify-center items-center gap-x-6 xl:gap-x-10">
               {navItems.map((item) => (
                 <button
                   key={item.page}
                   onClick={() => handleNav(item.page)}
-                  className={`text-[13px] uppercase tracking-[0.15em] font-black transition-all hover:text-igo-lime hover:scale-110 relative py-2 ${
+                  className={`text-[12px] xl:text-[13px] uppercase tracking-[0.15em] font-black transition-all hover:text-igo-lime hover:scale-105 relative py-2 ${
                     currentPage === item.page
                       ? 'text-igo-dark after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-igo-lime'
                       : 'text-igo-muted'
@@ -117,13 +133,8 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
 
             </nav>
 
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center mr-4 pr-4 border-r border-gray-100">
-                <div className="flex items-center gap-2 text-[10px] font-black text-igo-muted uppercase">
-                  <div className="w-1.5 h-1.5 rounded-full bg-igo-lime animate-ping"></div>
-                  Live Lab: <span className="text-igo-dark">28.4 C</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-1.5 xl:gap-2 shrink-0">
+
 
               <button
                 aria-label="Search products"

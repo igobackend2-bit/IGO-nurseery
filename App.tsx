@@ -25,6 +25,7 @@ import AdminInventory from './pages/AdminInventory';
 import CustomerAuth from './pages/CustomerAuth';
 import CustomerProfile from './pages/CustomerProfile';
 import { customerApi } from './services/customerApi';
+import { productApi } from './services/productApi';
 import { Customer, Notification, CartItem, Page, StoreProduct, Product as NurseryProduct, Order } from './types';
 import { Bell, CheckCircle2, X } from 'lucide-react';
 import { INITIAL_STORE_PRODUCTS } from './data/storeProducts';
@@ -206,12 +207,12 @@ const parseLocationToRoute = (): ParsedRoute => {
     };
   }
 
-  if (first === 'admin-orders') {
+  if (first === 'admin-orders' || first === 'admin') {
     return {
       page: Page.AdminOrders,
       productSlug: null,
       knowledgeArticleId: null,
-      canonicalPath: '/admin-orders',
+      canonicalPath: '/admin',
     };
   }
 
@@ -308,22 +309,22 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(initialRoute.page);
   const [productSlug, setProductSlug] = useState<string | null>(initialRoute.productSlug);
   const [knowledgeArticleId, setKnowledgeArticleId] = useState<string | null>(initialRoute.knowledgeArticleId);
-  const [products, setProducts] = useState<StoreProduct[]>(() => {
-    try {
-      const saved = localStorage.getItem('igo_products');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.error('Failed to parse products from local storage', e);
-    }
-    return INITIAL_STORE_PRODUCTS;
-  });
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('igo_products', JSON.stringify(products));
-  }, [products]);
+    let isMounted = true;
+    const loadProducts = async () => {
+      setIsProductsLoading(true);
+      const data = await productApi.fetchProducts();
+      if (isMounted) {
+        setProducts(data);
+        setIsProductsLoading(false);
+      }
+    };
+    loadProducts();
+    return () => { isMounted = false; };
+  }, []);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     const savedAdmin = localStorage.getItem('isAdmin');
@@ -541,14 +542,16 @@ const App: React.FC = () => {
     );
   };
 
-  const handleSubmitProduct = (productInput: Omit<StoreProduct, 'id'>) => {
-    const newProduct: StoreProduct = {
-      ...productInput,
-      id: `store-${Date.now()}`,
-    };
-
-    setProducts((previousProducts) => [newProduct, ...previousProducts]);
-    navigateTo('/store');
+  const handleSubmitProduct = async (productInput: Omit<StoreProduct, 'id'>) => {
+    const { data: newProduct, error } = await productApi.addProduct(productInput);
+    
+    if (newProduct) {
+      setProducts((previousProducts) => [newProduct, ...previousProducts]);
+      showToast(`Product ${newProduct.name} successfully added to store!`, 'success');
+      navigateTo('/admin-inventory');
+    } else {
+      showToast(`Failed: ${error}`, 'error');
+    }
   };
 
   const handleCheckout = () => {
@@ -680,7 +683,7 @@ const App: React.FC = () => {
       case Page.Shop:
         return (
           <Shop
-            products={products}
+            products={products.filter(p => !p.isArchived)}
             onOpenProduct={handleOpenProduct}
             addToCart={(product: NurseryProduct) =>
               handleAddToCart({
@@ -697,7 +700,7 @@ const App: React.FC = () => {
       case Page.Product:
         return (
           <Product
-            products={products}
+            products={products.filter(p => !p.isArchived)}
             selectedSlug={productSlug}
             onOpenProduct={handleOpenProduct}
             onAddToCart={handleAddToCart}
@@ -851,7 +854,7 @@ const App: React.FC = () => {
             case Page.AddProduct:
               return (
                 <div className="p-10">
-                   <AddProduct onSubmitProduct={handleSubmitProduct} onCancel={() => handlePageChange(Page.AdminOrders)} />
+                   <AddProduct onSubmitProduct={handleSubmitProduct} onCancel={() => handlePageChange(Page.AdminInventory)} />
                 </div>
               );
             default:
@@ -882,11 +885,21 @@ const App: React.FC = () => {
     }
   };
 
-  const isAddProductStandalone = currentPage === Page.AddProduct;
+  const isAdminRoute = [
+    Page.AdminOrders,
+    Page.AdminLeads,
+    Page.AdminInventory,
+    Page.AdminOverview,
+    Page.AdminNotifications,
+    Page.AdminProfile,
+    Page.MailHub,
+    Page.AddProduct,
+    Page.AdminLogin
+  ].includes(currentPage);
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-igo-lime selection:text-igo-dark">
-      {!isAddProductStandalone && (
+      {!isAdminRoute && (
         <Header 
           currentPage={currentPage} 
           setCurrentPage={handlePageChange} 
@@ -899,7 +912,7 @@ const App: React.FC = () => {
           onRefreshNotifications={fetchCustomerData}
         />
       )}
-      <main className={`flex-grow ${isAddProductStandalone ? '' : 'pt-20'}`}>
+      <main className={`flex-grow ${isAdminRoute ? '' : 'pt-20'}`}>
         {renderPage()}
       </main>
       
@@ -921,7 +934,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {!isAddProductStandalone && <Footer setCurrentPage={handlePageChange} />}
+      {!isAdminRoute && <Footer setCurrentPage={handlePageChange} />}
     </div>
   );
 };

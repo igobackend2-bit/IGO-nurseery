@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Zap, Microscope, ShieldCheck, MapPin, ExternalLink, Pickaxe, Cpu, Leaf, Activity } from 'lucide-react';
 import { Page } from '../types';
+import IGOBrandsScroll from '../components/IGOBrandsScroll';
 
 interface HomeProps {
   onNavigate?: (page: Page, param?: string) => void;
@@ -179,11 +180,20 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       </section>
 
       {/* Live Projects Scroller */}
-      <section className="bg-gray-50 py-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 mb-12 flex justify-between items-end">
+      <section className="py-24 overflow-hidden relative" style={{ background: '#F5F5F7' }}>
+        {/* Subtle green blur orb */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,82,61,0.04) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="max-w-7xl mx-auto px-4 mb-12 flex justify-between items-end relative z-10">
             <div>
-                <p className="text-sm uppercase tracking-[0.4em] font-black text-igo-lime mb-2">Portfolio Feed</p>
+                <div className="flex items-center gap-4 mb-3" style={{ color: '#c5a03f' }}>
+                  <div className="h-px w-8" style={{ background: '#c5a03f' }} />
+                  <p className="text-[10px] font-bold uppercase tracking-[0.4em]">Portfolio Feed</p>
+                </div>
                 <h2 className="text-4xl font-black text-igo-dark tracking-tighter">Live from our Sites.</h2>
+                <div className="flex gap-1.5 mt-3">
+                  <div className="w-10 h-1.5 rounded-full" style={{ background: '#003D2E' }} />
+                  <div className="w-4 h-1.5 rounded-full" style={{ background: '#c5a03f' }} />
+                </div>
             </div>
             <button onClick={() => handleNavigate(Page.Landscape)} className="text-xs font-black uppercase tracking-widest text-igo-muted hover:text-igo-dark transition-colors border-b-2 border-transparent hover:border-igo-dark pb-1">View All Case Studies</button>
         </div>
@@ -209,11 +219,26 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
+      {/* Gold divider */}
+      <div className="h-px w-full" style={{ background: 'linear-gradient(to right, transparent, #c5a03f44, transparent)' }} />
+
       {/* Industrial Segment Cards */}
-      <section className="py-32 max-w-7xl mx-auto px-4">
+      <section className="py-32 relative overflow-hidden" style={{ background: '#F9FAF9' }}>
+        {/* Dual blur orbs */}
+        <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,61,46,0.05) 0%, transparent 70%)', transform: 'translate(20%, -20%)' }} />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(197,160,63,0.05) 0%, transparent 70%)', transform: 'translate(-20%, 20%)' }} />
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="text-center space-y-4 mb-20">
-          <p className="text-sm uppercase tracking-[0.4em] font-black text-igo-lime">The IGO Collective</p>
+          <div className="flex items-center justify-center gap-4 mb-3" style={{ color: '#c5a03f' }}>
+            <div className="h-px w-10" style={{ background: '#c5a03f55' }} />
+            <p className="text-[10px] font-bold uppercase tracking-[0.4em]">The IGO Collective</p>
+            <div className="h-px w-10" style={{ background: '#c5a03f55' }} />
+          </div>
           <h2 className="text-4xl md:text-5xl font-black text-igo-dark tracking-tighter">Full-Stack Greenery Services.</h2>
+          <div className="flex gap-1.5 justify-center mt-3">
+            <div className="w-10 h-1.5 rounded-full" style={{ background: '#003D2E' }} />
+            <div className="w-4 h-1.5 rounded-full" style={{ background: '#c5a03f' }} />
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -266,10 +291,16 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </div>
           ))}
         </div>
+        </div>
       </section>
 
+      {/* Gold divider */}
+      <div className="h-px w-full" style={{ background: 'linear-gradient(to right, transparent, #c5a03f44, transparent)' }} />
+
       {/* Product Page Section */}
-      <section className="pb-24 max-w-7xl mx-auto px-4">
+      <section className="py-24 relative overflow-hidden" style={{ background: '#E8EAE8' }}>
+        <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,61,46,0.04) 0%, transparent 70%)', transform: 'translate(-50%, -50%)' }} />
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="bg-gradient-to-r from-igo-dark to-igo-charcoal rounded-[2.5rem] p-10 md:p-14 text-white grid lg:grid-cols-2 gap-10 items-center overflow-hidden relative">
           <div className="absolute inset-0 opacity-10 grid-pattern-md"></div>
           <div className="relative z-10">
@@ -293,10 +324,17 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             />
           </div>
         </div>
+        </div>
       </section>
 
+      {/* Gold divider */}
+      <div className="h-px w-full" style={{ background: 'linear-gradient(to right, transparent, #c5a03f44, transparent)' }} />
+
       {/* Tech Lab Spotlight */}
-      <section className="bg-igo-dark py-32 overflow-hidden">
+      <section className="bg-igo-dark py-32 overflow-hidden relative">
+        {/* Radial green glow */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,82,61,0.15) 0%, transparent 70%)', transform: 'translate(20%, -20%)' }} />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(197,160,63,0.08) 0%, transparent 70%)', transform: 'translate(-20%, 20%)' }} />
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div className="space-y-10">
@@ -344,8 +382,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
+      {/* Gold divider */}
+      <div className="h-px w-full" style={{ background: 'linear-gradient(to right, transparent, #c5a03f44, transparent)' }} />
+
       {/* Global Standard Trust */}
-      <section className="py-24 border-b border-gray-100 bg-gray-50/50">
+      <section className="py-24 relative overflow-hidden" style={{ background: '#F5F5F7' }}>
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,61,46,0.04) 0%, transparent 70%)', transform: 'translate(-20%, -20%)' }} />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(197,160,63,0.05) 0%, transparent 70%)', transform: 'translate(20%, 20%)' }} />
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-12">
             {[
                 { label: 'Plant Deliveries', value: '150,000+' },
@@ -361,9 +404,25 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
+      {/* Gold divider */}
+      <div className="h-px w-full" style={{ background: 'linear-gradient(to right, transparent, #c5a03f44, transparent)' }} />
+
+      {/* 26 IGO Group Brands Scroll */}
+      <IGOBrandsScroll />
+
+      {/* Gold divider */}
+      <div className="h-px w-full" style={{ background: 'linear-gradient(to right, transparent, #c5a03f44, transparent)' }} />
+
       {/* Call to Action: Project Capture */}
-      <section className="py-32 bg-white">
-        <div className="max-w-5xl mx-auto px-4 text-center space-y-12">
+      <section className="py-32 relative overflow-hidden" style={{ background: '#F9FAF9' }}>
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,61,46,0.05) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(197,160,63,0.05) 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+        <div className="max-w-5xl mx-auto px-4 text-center space-y-12 relative z-10">
+            <div className="flex items-center justify-center gap-4 mb-4" style={{ color: '#c5a03f' }}>
+              <div className="h-px w-10" style={{ background: '#c5a03f55' }} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em]">Start Your Project</span>
+              <div className="h-px w-10" style={{ background: '#c5a03f55' }} />
+            </div>
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter">Ready to Build Your <br/><span className="italic font-serif">Living Legacy?</span></h2>
             <p className="text-igo-muted text-xl max-w-2xl mx-auto font-medium">Whether you need an office plant or a resort masterplan, IGO combines art and science to create spaces that breathe.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-6">

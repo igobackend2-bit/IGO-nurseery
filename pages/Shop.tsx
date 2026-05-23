@@ -54,14 +54,29 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categories = useMemo(
-    () => ['All', ...Array.from(new Set(products.map((product) => product.category)))],
-    [products],
-  );
+  const categoryGroups: Record<string, string[]> = {
+    'Indoor': ['Indoor'],
+    'Outdoor': ['Outdoor', 'Herbs', 'Vegetables', 'Fruits'],
+    'Landscape': ['Creepers', 'Landscape'],
+    'Exotic': ['Cactus & Succulent', 'Exotic'],
+    'Accessories': ['Tools', 'Support', 'Growing Media', 'Infrastructure', 'Containers']
+  };
+
+  // The main buttons shown on the UI, exactly like the original website
+  const categories = ['All', 'Indoor', 'Outdoor', 'Landscape', 'Exotic', 'Accessories'];
 
   const filteredProducts = (products || []).filter((product) => {
-    if (!product) return false;
-    const categoryMatch = filter === 'All' || product.category === filter;
+    if (!product || product.isArchived) return false;
+    
+    let mainCategory = product.category;
+    for (const [groupName, subCategories] of Object.entries(categoryGroups)) {
+      if (subCategories.includes(product.category)) {
+        mainCategory = groupName;
+        break;
+      }
+    }
+
+    const categoryMatch = filter === 'All' || mainCategory === filter;
     const query = searchQuery.trim().toLowerCase();
     const searchMatch = query.length === 0 || (product.name && product.name.toLowerCase().includes(query));
     return categoryMatch && searchMatch;
