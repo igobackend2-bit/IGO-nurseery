@@ -1,5 +1,5 @@
-import React from 'react';
-import { Package, AlertCircle, CheckCircle2, ShoppingCart, Tag, Filter, Trash2, X, Edit2, ImagePlus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Package, AlertCircle, CheckCircle2, ShoppingCart, Tag, Filter, Trash2, X, Edit2, ImagePlus, Save, Minus, Plus } from 'lucide-react';
 import { StoreProduct } from '../types';
 import { productApi } from '../services/productApi';
 
@@ -9,9 +9,10 @@ interface AdminInventoryProps {
 }
 
 const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProducts }) => {
-  const [filter, setFilter] = React.useState<'all' | 'out' | 'archived'>('all');
-  const [editingProduct, setEditingProduct] = React.useState<StoreProduct | null>(null);
-  const [editForm, setEditForm] = React.useState<Partial<StoreProduct>>({});
+  const [filter, setFilter] = useState<'all' | 'out' | 'archived'>('all');
+  const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
+  const [editForm, setEditForm] = useState<Partial<StoreProduct>>({});
+  const [inlineStock, setInlineStock] = useState<Record<string, number>>({});
 
   const handleEditClick = (product: StoreProduct) => {
     setEditingProduct(product);
@@ -32,27 +33,27 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
     setEditingProduct(null);
   };
 
-  const toggleStock = async (productId: string) => {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    
-    const currentStock = product.stock || 0;
-    const input = window.prompt(`Enter real-time stock quantity for ${product.name}:`, currentStock.toString());
-    if (input === null) return; // Cancelled
-    
-    const newStock = parseInt(input, 10);
-    if (isNaN(newStock) || newStock < 0) {
-      alert('Invalid stock. Please enter a valid number (0 or higher).');
-      return;
-    }
-    
-    const newOutOfStock = newStock === 0;
+  const handleInlineStockChange = (productId: string, val: number) => {
+    setInlineStock(prev => ({ ...prev, [productId]: Math.max(0, val) }));
+  };
+
+  const handleInlineStockSave = async (productId: string) => {
+    const newStock = inlineStock[productId];
+    if (newStock === undefined) return;
+    const newOutOfStock = newStock <= 0;
     
     const updatedProducts = products.map(p => 
       p.id === productId ? { ...p, stock: newStock, outOfStock: newOutOfStock } : p
     );
     onUpdateProducts(updatedProducts);
     await productApi.updateProduct(productId, { stock: newStock, outOfStock: newOutOfStock });
+    
+    // Clear from inline state once saved
+    setInlineStock(prev => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
   };
 
   const toggleArchive = async (productId: string) => {
@@ -179,27 +180,71 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
           <table className="w-full border-collapse">
             <thead>
               <tr className="text-left border-b border-gray-50">
-                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest">Product Intelligence</th>
-                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest text-center">Valuation</th>
-                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest text-center">Status Stream</th>
-                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest text-right">Execution</th>
+                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest">Product</th>
+                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest">Category</th>
+                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest text-center">Current Stock Level</th>
+                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest text-center">Status</th>
+                <th className="p-8 text-[10px] font-black text-igo-muted uppercase tracking-widest text-right">Quick Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product) => {
+                const stockVal = inlineStock[product.id] !== undefined ? inlineStock[product.id] : (product.stock || 0);
+                const isDirty = inlineStock[product.id] !== undefined && inlineStock[product.id] !== (product.stock || 0);
+                return (
                 <tr key={product.id} className="border-b border-gray-50 last:border-none group hover:bg-gray-50/50 transition-colors">
                   <td className="p-8">
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md bg-gray-100 shrink-0">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm bg-gray-100 shrink-0">
                         <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-igo-dark tracking-tight leading-none mb-1">{product.name}</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.category}</p>
+                        <p className="text-sm font-black text-igo-dark tracking-tight leading-none">{product.name}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="p-8 text-center font-black text-igo-dark italic">₹{product.price}</td>
+                  <td className="p-8">
+                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.category}</p>
+                  </td>
+                  <td className="p-8">
+                     <div className="flex items-center justify-center gap-3">
+                        <button 
+                          onClick={() => handleInlineStockChange(product.id, stockVal - 1)}
+                          className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-200 hover:text-igo-dark transition-colors"
+                        >
+                           <Minus className="w-3 h-3" />
+                        </button>
+                        <div className="relative">
+                           <input 
+                             type="number"
+                             value={stockVal}
+                             onChange={(e) => handleInlineStockChange(product.id, parseInt(e.target.value) || 0)}
+                             className="w-20 px-3 py-2 text-center text-sm font-black text-igo-dark bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-igo-lime"
+                           />
+                           <span className="absolute right-[-24px] top-1/2 -translate-y-1/2 text-[9px] font-black text-gray-300 uppercase tracking-widest">Qty</span>
+                        </div>
+                        <button 
+                          onClick={() => handleInlineStockChange(product.id, stockVal + 1)}
+                          className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-200 hover:text-igo-dark transition-colors mr-6"
+                        >
+                           <Plus className="w-3 h-3" />
+                        </button>
+                        
+                        {isDirty ? (
+                          <button 
+                            onClick={() => handleInlineStockSave(product.id)}
+                            className="w-10 h-10 flex items-center justify-center bg-igo-lime text-igo-dark rounded-xl shadow-lg hover:bg-black hover:text-white transition-all animate-in zoom-in duration-300"
+                            title="Save new stock level"
+                          >
+                            <Save className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <div className="w-10 h-10 flex items-center justify-center text-gray-300">
+                             <Save className="w-4 h-4 opacity-50" />
+                          </div>
+                        )}
+                     </div>
+                  </td>
                   <td className="p-8">
                     <div className="flex flex-col items-center gap-2">
                       {product.isArchived ? (
@@ -230,19 +275,9 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                       {!product.isArchived ? (
                         <>
                           <button
-                            onClick={() => toggleStock(product.id)}
-                            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-md active:scale-95 ${
-                              product.outOfStock || (product.stock !== undefined && product.stock <= 0)
-                                ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
-                                : 'bg-igo-dark text-white hover:bg-gray-800'
-                            }`}
-                          >
-                            Update Stock
-                          </button>
-                          <button
                             onClick={() => handleEditClick(product)}
                             className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-igo-dark hover:text-white transition-all shadow-sm border border-gray-200"
-                            title="Edit Product"
+                            title="Edit Product Details"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -274,7 +309,7 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
