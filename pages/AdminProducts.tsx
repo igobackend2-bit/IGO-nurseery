@@ -60,6 +60,14 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onUpdateProduct
     }
   };
 
+  const toggleOutOfStock = async (productId: string, newStatus: boolean) => {
+    const updatedProducts = products.map(p => 
+      p.id === productId ? { ...p, outOfStock: newStatus, stock: newStatus ? 0 : Math.max(100, p.stock || 100) } : p
+    );
+    onUpdateProducts(updatedProducts);
+    await productApi.updateProduct(productId, { outOfStock: newStatus, stock: newStatus ? 0 : 100 });
+  };
+
   return (
     <div className="p-10 space-y-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -138,12 +146,18 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onUpdateProduct
                               </span>
                            </div>
                            <div className="flex gap-2">
-                              <div className={`flex-1 flex justify-center items-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${!isOutOfStock ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-300 border-transparent'}`}>
+                              <button 
+                                 onClick={() => toggleOutOfStock(product.id, false)}
+                                 className={`flex-1 flex justify-center items-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${!isOutOfStock ? 'bg-green-50 text-green-700 border-green-100 shadow-inner' : 'bg-gray-50 text-gray-400 border-transparent hover:bg-green-50 hover:text-green-600'}`}
+                              >
                                  <CheckCircle2 className="w-3 h-3" /> IN STOCK
-                              </div>
-                              <div className={`flex-1 flex justify-center items-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${isOutOfStock ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-300 border-transparent'}`}>
+                              </button>
+                              <button 
+                                 onClick={() => toggleOutOfStock(product.id, true)}
+                                 className={`flex-1 flex justify-center items-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isOutOfStock ? 'bg-red-50 text-red-600 border-red-100 shadow-inner' : 'bg-gray-50 text-gray-400 border-transparent hover:bg-red-50 hover:text-red-600'}`}
+                              >
                                  <AlertCircle className="w-3 h-3" /> OUT OF STOCK
-                              </div>
+                              </button>
                            </div>
                         </div>
 

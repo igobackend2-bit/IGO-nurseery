@@ -525,6 +525,8 @@ const App: React.FC = () => {
 
       return [...previousItems, { product, quantity: 1 }];
     });
+    
+    showToast(`Added ${product.name} to your cart!`, 'success');
   };
 
   const handleIncreaseQuantity = (productId: string) => {
