@@ -294,9 +294,9 @@ export const customerApi = {
 
     const { data, error } = await supabase
       .from('orders')
-      .select('*, order_items(*, products(*))')
+      .select('*, order_items(*)')
       .eq('customer_id', user.id)
-      .order('created_at', { ascending: false });
+      .order('order_date', { ascending: false });
 
     if (error) {
       console.error('getOrders Supabase error:', error.message);
