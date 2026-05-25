@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /admin-login/
+Disallow: /api/
+Disallow: /private/
+
+# Sitemap location
+Sitemap: https://www.igonursery.com/sitemap.xml
