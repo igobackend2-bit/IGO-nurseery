@@ -152,7 +152,13 @@ export const customerApi = {
     if (authData.session) {
       localStorage.setItem('igo_customer_token', authData.session.access_token);
     }
-    return { token: authData.session?.access_token, customer: authData.user };
+    const customer = authData.user ? {
+      id: authData.user.id,
+      email: authData.user.email || '',
+      name: authData.user.user_metadata?.name || '',
+      phone: authData.user.user_metadata?.phone || ''
+    } : null;
+    return { token: authData.session?.access_token, customer };
   },
 
   async login(credentials: any) {
@@ -169,14 +175,29 @@ export const customerApi = {
     if (data.session) {
       localStorage.setItem('igo_customer_token', data.session.access_token);
     }
-    return { token: data.session?.access_token, customer: data.user };
+    const customer = data.user ? {
+      id: data.user.id,
+      email: data.user.email || '',
+      name: data.user.user_metadata?.name || '',
+      phone: data.user.user_metadata?.phone || ''
+    } : null;
+    return { token: data.session?.access_token, customer };
   },
 
   async getSession() {
     const { supabase } = await import('./supabaseClient');
     const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      return { token: data.session.access_token, customer: data.session.user };
+    if (data.session && data.session.user) {
+      const user = data.session.user;
+      return { 
+        token: data.session.access_token, 
+        customer: {
+          id: user.id,
+          email: user.email || '',
+          name: user.user_metadata?.name || '',
+          phone: user.user_metadata?.phone || ''
+        } 
+      };
     }
     return null;
   },
@@ -238,7 +259,13 @@ export const customerApi = {
     if (!user) return { customer: null };
     
     const { data } = await supabase.from('customers').select('*').eq('id', user.id).single();
-    return { customer: data || user };
+    const customer = data || {
+      id: user.id,
+      email: user.email || '',
+      name: user.user_metadata?.name || '',
+      phone: user.user_metadata?.phone || ''
+    };
+    return { customer };
   },
 
   async updateProfile(data: any) {
