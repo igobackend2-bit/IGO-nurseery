@@ -17,11 +17,11 @@ import { productApi } from '../services/productApi';
 import { Order, Lead, StoreProduct, Page } from '../types';
 
 interface AdminOverviewProps {
+  orders: Order[];
   onNavigate?: (page: Page) => void;
 }
 
-const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
-  const [orders, setOrders] = useState<Order[]>([]);
+const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [products, setProducts] = useState<StoreProduct[]>([]);
 
@@ -33,9 +33,6 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
       } catch (e) {
         console.error('Failed to fetch products', e);
       }
-
-      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      setOrders(localOrders);
 
       const localLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
       setLeads(localLeads);

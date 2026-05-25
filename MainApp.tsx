@@ -730,19 +730,16 @@ const MainApp: React.FC = () => {
         lastFour: orderData.lastFour,
       };
 
-      // 1. Background Submission
-      submitOrder(payload)
-        .then((response) => {
-          persistCustomerOrderReference({
-            orderNumber: response.order.orderNumber,
-            accessKey: response.accessKey,
-          });
-          if (customer) {
-            loadCustomerData(); // Refresh orders list for profile
-          }
-          console.log('✅ Order saved to backend');
-        })
-        .catch((error) => console.error('⚠️ Backend save failed:', error));
+      // 1. Backend Submission
+      const response = await submitOrder(payload);
+      persistCustomerOrderReference({
+        orderNumber: response.order.orderNumber,
+        accessKey: response.accessKey,
+      });
+      if (customer) {
+        loadCustomerData(); // Refresh orders list for profile
+      }
+      console.log('✅ Order saved to backend');
 
       // 2. Background Emails
       const emailData = {
@@ -1040,10 +1037,13 @@ const MainApp: React.FC = () => {
             if (currentPage === Page.AdminLeads) {
               return <AdminLeads onNavigate={handlePageChange} leadId={routeParam} />;
             }
+            if (currentPage === Page.AdminOverview) {
+              return <AdminOverview orders={adminOrders} onNavigate={navigateTo} />;
+            }
             if (currentPage === Page.AddProduct) {
               return <AddProduct onSubmitProduct={handleSubmitProduct} onCancel={() => navigateTo(Page.Shop)} />;
             }
-            return <AdminOverview />;
+            return <AdminOverview orders={adminOrders} onNavigate={navigateTo} />;
           };
 
           return (
