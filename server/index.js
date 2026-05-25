@@ -935,11 +935,13 @@ export const handler = async (request, response) => {
 };
 
 // Standard Node.js Server Startup
-const server = http.createServer(handler);
-// Use Railway's PORT env var, fallback to API_PORT for local dev
-const LISTEN_PORT = Number(process.env.PORT || API_PORT);
-server.listen(LISTEN_PORT, '0.0.0.0', () => {
-  console.log(`IGO backend API running on port ${LISTEN_PORT}`);
-});
+if (!process.env.VERCEL) {
+  const server = http.createServer(handler);
+  // Use Railway's PORT env var, fallback to API_PORT for local dev
+  const LISTEN_PORT = Number(process.env.PORT || API_PORT);
+  server.listen(LISTEN_PORT, '0.0.0.0', () => {
+    console.log(`IGO backend API running on port ${LISTEN_PORT}`);
+  });
+}
 
 export default handler;
