@@ -70,8 +70,58 @@ export const fetchAdminOrder = async (token: string, orderNumber: string) => {
 
 export const updateAdminOrderStatus = async (token: string, orderNumber: string, status: Order['status']) => {
   const { supabase } = await import('./supabaseClient');
+  
+  // 1. Fetch full order with items first (for the email)
+  const { data: orderData, error: fetchErr } = await supabase.from('orders').select('*, order_items(*, products(*))').eq('order_number', orderNumber).single();
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  // 2. Update status
   const { data, error } = await supabase.from('orders').update({ status }).eq('order_number', orderNumber).select().single();
   if (error) throw new Error(error.message);
+  
+  // 3. Trigger Email via PHP
+  try {
+    const emailPayload = {
+      orderNumber: orderData.order_number,
+      customerName: 'Customer', // If we don't have name easily available
+      status: status,
+      items: orderData.order_items.map((i: any) => ({
+         quantity: i.quantity,
+         price: i.price,
+         product: i.products
+      })),
+      subtotal: orderData.subtotal,
+      deliveryCharge: orderData.delivery_charge,
+      total: orderData.total,
+      estimatedDelivery: orderData.estimated_delivery
+    };
+
+    // Need to get customer email. Let's fetch it if possible.
+    let customerEmail = '';
+    if (orderData.customer_id) {
+       const { data: cData } = await supabase.from('customers').select('email, name').eq('id', orderData.customer_id).single();
+       if (cData) {
+          customerEmail = cData.email;
+          emailPayload.customerName = cData.name;
+       }
+    }
+    
+    if (customerEmail) {
+      await fetch('/mailer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: 'igo_nursery_secret_key_2026',
+          type: 'status_update',
+          to: customerEmail,
+          order: emailPayload
+        })
+      });
+    }
+  } catch (e) {
+    console.error('Failed to send status email:', e);
+  }
+
   return { order: data as any };
 };
 
@@ -149,6 +199,22 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
   if (itemsToInsert.length > 0) {
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
     if (itemsError) throw new Error(itemsError.message);
+  }
+  
+  // Trigger Email via PHP
+  try {
+    await fetch('/mailer.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: 'igo_nursery_secret_key_2026',
+        type: 'order_confirmation',
+        to: payload.customerEmail,
+        order: payload
+      })
+    });
+  } catch (e) {
+    console.error('Failed to trigger confirmation email:', e);
   }
   
   return { order: payload as any, accessKey: payload.accessKey };
