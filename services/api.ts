@@ -109,7 +109,7 @@ export const fetchAdminOrder = async (token: string, orderNumber: string) => {
   const { supabase } = await import('./supabaseClient');
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*, products(*))')
+    .select('*, order_items(*)')
     .eq('order_number', orderNumber)
     .single();
   if (error) throw new Error(error.message);
@@ -122,7 +122,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
   // 1. Fetch full order (customer_email is stored directly on the order row now)
   const { data: orderData, error: fetchErr } = await supabase
     .from('orders')
-    .select('*, order_items(*, products(*))')
+    .select('*, order_items(*)')
     .eq('order_number', orderNumber)
     .single();
   if (fetchErr) throw new Error(fetchErr.message);
@@ -132,7 +132,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     .from('orders')
     .update({ status })
     .eq('order_number', orderNumber)
-    .select('*, order_items(*, products(*))')
+    .select('*, order_items(*)')
     .single();
   if (error) throw new Error(error.message);
 
