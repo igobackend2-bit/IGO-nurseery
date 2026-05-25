@@ -286,10 +286,25 @@ export const customerApi = {
   },
 
   async getOrders(): Promise<{ orders: Order[] }> {
-    const res = await fetch(`${API_BASE}/customer/orders`, {
-      headers: getHeaders(),
-    });
-    return res.json();
+    // The backend server only handles emails — /api/customer/orders doesn't exist.
+    // Fetch directly from Supabase using the logged-in customer's session.
+    const { supabase } = await import('./supabaseClient');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { orders: [] };
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, order_items(*, products(*))')
+      .eq('customer_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('getOrders Supabase error:', error.message);
+      return { orders: [] };
+    }
+
+    const { normalizeOrder } = await import('./api');
+    return { orders: (data ?? []).map(normalizeOrder) };
   },
 
   async getNotifications(email?: string): Promise<{ notifications: Notification[] }> {

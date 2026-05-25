@@ -109,7 +109,7 @@ export const fetchAdminOrder = async (token: string, orderNumber: string) => {
   const { supabase } = await import('./supabaseClient');
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*, order_items(*, products(*))')
     .eq('order_number', orderNumber)
     .single();
   if (error) throw new Error(error.message);
@@ -122,7 +122,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
   // 1. Fetch full order (customer_email is stored directly on the order row now)
   const { data: orderData, error: fetchErr } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*, order_items(*, products(*))')
     .eq('order_number', orderNumber)
     .single();
   if (fetchErr) throw new Error(fetchErr.message);
@@ -132,7 +132,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     .from('orders')
     .update({ status })
     .eq('order_number', orderNumber)
-    .select('*, order_items(*)')
+    .select('*, order_items(*, products(*))')
     .single();
   if (error) throw new Error(error.message);
 
@@ -215,110 +215,78 @@ export const createOrderPayload = (orderData: OrderData, cartItems: CartItem[], 
 
 export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>) => {
   const { supabase } = await import('./supabaseClient');
-  
+
+  // Insert order row — now includes customer info & tracking number
   const { data: order, error } = await supabase.from('orders').insert({
-    order_number: payload.orderNumber,
-    access_key: payload.accessKey,
-    customer_id: payload.customerId || null,
+    order_number:     payload.orderNumber,
+    tracking_number:  payload.trackingNumber,
+    access_key:       payload.accessKey,
+    customer_id:      payload.customerId || null,
+    customer_name:    payload.customerName,
+    customer_email:   payload.customerEmail,
+    customer_phone:   payload.customerPhone,
+    last_four:        payload.lastFour || null,
     shipping_address: payload.shippingAddress,
-    city: payload.city,
-    state: payload.state,
-    zip_code: payload.zipCode,
-    subtotal: payload.subtotal,
-    tax: payload.tax,
-    delivery_charge: payload.deliveryCharge,
-    total: payload.total,
-    payment_method: payload.paymentMethod,
-    status: payload.status,
-    estimated_delivery: payload.estimatedDelivery
+    city:             payload.city,
+    state:            payload.state,
+    zip_code:         payload.zipCode,
+    subtotal:         payload.subtotal,
+    tax:              payload.tax,
+    delivery_charge:  payload.deliveryCharge,
+    total:            payload.total,
+    payment_method:   payload.paymentMethod,
+    status:           payload.status,
+    estimated_delivery: payload.estimatedDelivery,
   }).select().single();
-  
+
   if (error) throw new Error(error.message);
-  
-  const itemsToInsert = payload.items.map(item => ({
-    order_id: order.id,
-    product_id: item.product.id,
-    quantity: item.quantity,
-    price: item.product.price
-  }));
-  
-  if (itemsToInsert.length > 0) {
+
+  // Insert items with inline product data so no FK join is needed on read
+  if (payload.items.length > 0) {
+    const itemsToInsert = payload.items.map(item => ({
+      order_id:         order.id,
+      product_id:       item.product.id,
+      product_name:     item.product.name,
+      product_image:    item.product.image,
+      product_category: item.product.category,
+      quantity:         item.quantity,
+      price:            item.product.price,
+    }));
+
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
     if (itemsError) throw new Error(itemsError.message);
   }
-  
-  // Trigger Email via PHP
-  try {
-    await fetch('/mailer.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: 'igo_nursery_secret_key_2026',
-        type: 'order_confirmation',
-        to: payload.customerEmail,
-        order: payload
-      })
-    });
-  } catch (e) {
-    console.error('Failed to trigger confirmation email:', e);
-  }
-  
+
   return { order: payload as any, accessKey: payload.accessKey };
 };
 
-export const mapSupabaseOrder = (dbOrder: any): Order => {
-  return {
-    id: dbOrder.id,
-    orderNumber: dbOrder.order_number,
-    trackingNumber: dbOrder.tracking_number || '',
-    accessKey: dbOrder.access_key,
-    customerId: dbOrder.customer_id,
-    customerName: dbOrder.customer_name || 'Customer',
-    customerEmail: dbOrder.customer_email || '',
-    customerPhone: dbOrder.customer_phone || '',
-    shippingAddress: dbOrder.shipping_address,
-    city: dbOrder.city,
-    state: dbOrder.state,
-    zipCode: dbOrder.zip_code,
-    items: (dbOrder.order_items || []).map((item: any) => ({
-      product: item.products,
-      quantity: item.quantity,
-      price: item.price
-    })),
-    subtotal: dbOrder.subtotal,
-    tax: dbOrder.tax,
-    deliveryCharge: dbOrder.delivery_charge,
-    total: dbOrder.total,
-    paymentMethod: dbOrder.payment_method,
-    lastFour: dbOrder.last_four,
-    status: dbOrder.status,
-    createdAt: dbOrder.created_at,
-    estimatedDelivery: dbOrder.estimated_delivery
-  };
-};
+/** @deprecated use normalizeOrder instead */
+export const mapSupabaseOrder = normalizeOrder;
 
 export const fetchCustomerOrders = async (references: CustomerOrderReference[]) => {
   if (!references || references.length === 0) return { orders: [] };
   const { supabase } = await import('./supabaseClient');
   const orderNumbers = references.map(r => r.orderNumber);
-  
-  const { data, error } = await supabase.from('orders')
-    .select('*, order_items(*, products(*))')
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
     .in('order_number', orderNumbers)
-    .order('created_at', { ascending: false });
-    
+    .order('order_date', { ascending: false });
+
   if (error) throw new Error(error.message);
-  return { orders: (data || []).map(mapSupabaseOrder) };
+  return { orders: (data ?? []).map(normalizeOrder) };
 };
 
 export const fetchCustomerOrder = async (orderNumber: string, accessKey: string) => {
   const { supabase } = await import('./supabaseClient');
-  const { data, error } = await supabase.from('orders')
-    .select('*, order_items(*, products(*))')
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
     .eq('order_number', orderNumber)
     .eq('access_key', accessKey)
     .single();
-    
+
   if (error) throw new Error(error.message);
-  return { order: mapSupabaseOrder(data) };
+  return { order: normalizeOrder(data) };
 };
