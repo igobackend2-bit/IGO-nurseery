@@ -12,7 +12,8 @@ let realDb = null;
 // Vercel uses a read-only filesystem where SQLite writes will fail.
 if (!process.env.VERCEL) {
   try {
-    const Database = (await import('better-sqlite3')).default;
+    const dbModule = 'better-sqlite3';
+    const Database = (await import(dbModule)).default;
     realDb = new Database(DB_PATH);
     console.log('📦 Local SQLite Database connected.');
   } catch (err) {
