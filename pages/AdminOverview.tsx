@@ -148,20 +148,31 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
             </div>
             
             {/* Real Chart Visual */}
-            <div className="flex-grow flex items-end justify-between gap-4 py-4 h-64">
+            <div className="flex-grow flex items-end justify-between gap-4 py-4 h-64 relative mt-4">
+               {/* Background Grid */}
+               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-[0.03] z-0">
+                  <div className="w-full h-px bg-igo-dark"></div>
+                  <div className="w-full h-px bg-igo-dark"></div>
+                  <div className="w-full h-px bg-igo-dark"></div>
+                  <div className="w-full h-px bg-igo-dark"></div>
+                  <div className="w-full h-px bg-igo-dark"></div>
+               </div>
+
                {chartData.map((data, i) => {
-                  const heightPercent = Math.max((data.total / maxTotal) * 100, 2); // min height 2% for visibility
+                  const hasData = data.total > 0;
+                  const heightPercent = hasData ? Math.max((data.total / maxTotal) * 100, 8) : 2;
+                  
                   return (
-                  <div key={i} className="flex-grow group relative h-full flex items-end">
+                  <div key={i} className="flex-grow group relative h-full flex items-end z-10">
                      <div 
-                       className="w-full bg-gray-100 group-hover:bg-igo-lime rounded-t-xl transition-all duration-500 relative flex flex-col justify-end overflow-hidden" 
+                       className={`w-full ${hasData ? 'bg-gray-200' : 'bg-gray-100'} group-hover:bg-igo-lime rounded-t-xl transition-all duration-500 relative flex flex-col justify-end overflow-hidden`}
                        style={{ height: `${heightPercent}%` }}
                      >
-                        {data.total > 0 && (
+                        {hasData && (
                            <div className="absolute inset-x-0 bottom-0 bg-igo-dark/10" style={{ height: `${(data.orders / data.total) * 100}%` }}></div>
                         )}
                      </div>
-                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 bg-igo-dark text-white px-3 py-2 rounded-xl text-[10px] font-bold shadow-xl pointer-events-none">
+                     <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 bg-igo-dark text-white px-3 py-2 rounded-xl text-[10px] font-bold shadow-xl pointer-events-none">
                         <span className="text-igo-lime block mb-1">{data.monthLabel}</span>
                         {data.orders} Orders • {data.leads} Inquiries
                      </div>
