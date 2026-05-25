@@ -56,6 +56,36 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
     });
   };
 
+  const toggleForceOutOfStock = async (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    const newStatus = !product.outOfStock;
+
+    const updatedProducts = products.map(p => 
+      p.id === productId ? { ...p, outOfStock: newStatus } : p
+    );
+    onUpdateProducts(updatedProducts);
+    await productApi.updateProduct(productId, { outOfStock: newStatus });
+  };
+
+  const refillAllStock = async () => {
+    if (window.confirm('This will refill all unarchived products to 100 stock. Continue?')) {
+      const updatedProducts = products.map(p => {
+        if (!p.isArchived) {
+          return { ...p, stock: 100, outOfStock: false };
+        }
+        return p;
+      });
+      onUpdateProducts(updatedProducts);
+      
+      for (const p of updatedProducts) {
+        if (!p.isArchived) {
+          await productApi.updateProduct(p.id, { stock: 100, outOfStock: false });
+        }
+      }
+    }
+  };
+
   const toggleArchive = async (productId: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -160,10 +190,17 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
              Reset Catalog
            </button>
            <button 
+             onClick={refillAllStock}
+             className="px-6 py-2 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-green-700 transition-all border border-green-700 flex items-center gap-2"
+             title="Refill all active products to 100 stock"
+           >
+             <Package className="w-3 h-3" /> Refill All (100)
+           </button>
+           <button 
              onClick={() => window.location.href = '/add-product'}
              className="px-6 py-2 bg-igo-lime text-igo-dark rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-white transition-all flex items-center gap-2"
            >
-             <Package className="w-3 h-3" /> Add Product
+             <Plus className="w-3 h-3" /> Add Product
            </button>
         </div>
       </div>
@@ -274,6 +311,13 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                     <div className="flex items-center justify-end gap-3">
                       {!product.isArchived ? (
                         <>
+                          <button
+                            onClick={() => toggleForceOutOfStock(product.id)}
+                            className={`p-3 rounded-xl transition-all shadow-sm border ${product.outOfStock ? 'bg-red-500 text-white border-red-600 hover:bg-red-600' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-red-50 hover:text-red-600'}`}
+                            title={product.outOfStock ? "Remove Force Out of Stock" : "Force Out of Stock Manually"}
+                          >
+                            <AlertCircle className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleEditClick(product)}
                             className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-igo-dark hover:text-white transition-all shadow-sm border border-gray-200"
