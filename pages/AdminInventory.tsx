@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, AlertCircle, CheckCircle2, ShoppingCart, Tag, Filter, Trash2, X, Edit2 } from 'lucide-react';
+import { Package, AlertCircle, CheckCircle2, ShoppingCart, Tag, Filter, Trash2, X, Edit2, ImagePlus } from 'lucide-react';
 import { StoreProduct } from '../types';
 import { productApi } from '../services/productApi';
 
@@ -303,14 +303,41 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Image URL</label>
-                <input 
-                  type="text" 
-                  value={editForm.image || ''} 
-                  onChange={e => setEditForm({ ...editForm, image: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Image URL</label>
+                  <input 
+                    type="text" 
+                    value={editForm.image || ''} 
+                    onChange={e => setEditForm({ ...editForm, image: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Upload Image</label>
+                  <label className="w-full px-4 py-3 bg-gray-50 border border-dashed border-gray-300 rounded-xl flex items-center gap-2 cursor-pointer hover:border-igo-lime transition-all">
+                    <ImagePlus className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs text-gray-500 font-bold overflow-hidden text-ellipsis whitespace-nowrap">
+                      {editForm.image?.startsWith('data:image') ? 'Image selected' : 'Choose file'}
+                    </span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          if (typeof reader.result === 'string') {
+                            setEditForm({ ...editForm, image: reader.result });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }} 
+                    />
+                  </label>
+                </div>
               </div>
 
               <div>
