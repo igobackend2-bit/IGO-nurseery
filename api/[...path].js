@@ -1,4 +1,4 @@
-import handler from '../server/index.js';
+import { handler } from '../server/index.js';
 
 export default async function (req, res) {
   // Set CORS headers for Vercel
