@@ -30,6 +30,7 @@ export const productApi = {
         category: item.category,
         image: item.image,
         description: item.description,
+        stock: item.stock !== undefined && item.stock !== null ? Number(item.stock) : 0,
         outOfStock: item.out_of_stock || item.outOfStock || false,
         isArchived: item.is_archived || item.isArchived || false
       }));
@@ -59,6 +60,7 @@ export const productApi = {
       category: p.category,
       image: p.image,
       description: p.description,
+      stock: p.stock || 0,
       out_of_stock: p.outOfStock || false,
       is_archived: p.isArchived || false
     }));
@@ -87,6 +89,7 @@ export const productApi = {
       category: product.category,
       image: product.image,
       description: product.description || '',
+      stock: product.stock || 0,
       out_of_stock: product.outOfStock || false,
       is_archived: product.isArchived || false
     };
@@ -111,6 +114,7 @@ export const productApi = {
         category: data.category,
         image: data.image,
         description: data.description,
+        stock: data.stock !== undefined && data.stock !== null ? Number(data.stock) : 0,
         outOfStock: data.out_of_stock || data.outOfStock || false,
         isArchived: data.is_archived || data.isArchived || false
       },
@@ -127,6 +131,9 @@ export const productApi = {
     if (updates.isArchived !== undefined) {
       dbUpdates.is_archived = updates.isArchived;
       delete dbUpdates.isArchived;
+    }
+    if (updates.stock !== undefined) {
+      dbUpdates.stock = updates.stock;
     }
 
     const { error } = await supabase

@@ -80,6 +80,7 @@ export interface StoreProduct {
   category: string;
   image: string;
   description: string;
+  stock?: number;
   outOfStock?: boolean;
   isArchived?: boolean;
 }

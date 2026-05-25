@@ -607,6 +607,29 @@ const App: React.FC = () => {
       body: JSON.stringify({ ...newOrder, accessKey }),
     }).then(() => console.log('✅ Order saved to backend')).catch(e => console.error('⚠️ DB Error:', e));
 
+    // 1b. Deduct stock & trigger alarms
+    const lowStockAlerts: any[] = [];
+    for (const item of cartItems) {
+      const currentStock = item.product.stock || 0;
+      const newStock = Math.max(0, currentStock - item.quantity);
+      productApi.updateProduct(item.product.id, { stock: newStock }).catch(e => console.error('Stock deduction error', e));
+      
+      if (newStock < 5) {
+        lowStockAlerts.push({
+          id: `stock-${Date.now()}-${item.product.id}`,
+          type: 'inventory',
+          title: 'LOW STOCK ALERT',
+          message: `${item.product.name} has fallen below safe levels (${newStock} remaining). Restock immediately.`,
+          time: new Date().toISOString(),
+          read: false
+        });
+      }
+    }
+    
+    if (lowStockAlerts.length > 0) {
+       setAdminNotifications(prev => [...lowStockAlerts, ...prev]);
+    }
+
     // 2. Send Emails (Background)
     const emailData = {
       to: orderData.email,
@@ -858,7 +881,7 @@ const App: React.FC = () => {
                 </div>
               );
             default:
-              return <AdminOverview />;
+              return <AdminOverview onNavigate={(page) => handlePageChange(page)} />;
           }
         };
 

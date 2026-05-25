@@ -14,9 +14,13 @@ import {
   Activity
 } from 'lucide-react';
 import { productApi } from '../services/productApi';
-import { Order, Lead, StoreProduct } from '../types';
+import { Order, Lead, StoreProduct, Page } from '../types';
 
-const AdminOverview: React.FC = () => {
+interface AdminOverviewProps {
+  onNavigate?: (page: Page) => void;
+}
+
+const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [products, setProducts] = useState<StoreProduct[]>([]);
@@ -39,11 +43,6 @@ const AdminOverview: React.FC = () => {
     fetchStats();
   }, []);
 
-  const navigate = (path: string) => {
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new Event('popstate'));
-  };
-
   // Calculations
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -59,10 +58,10 @@ const AdminOverview: React.FC = () => {
   const liveInventoryCount = products.filter(p => !p.isArchived).length;
 
   const stats = [
-    { label: 'Monthly Revenue', value: formattedRevenue, trend: '+12.5%', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50', link: '/admin-orders' },
-    { label: 'Active Inquiries', value: activeInquiriesCount.toString(), trend: '+8.2%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', link: '/admin-leads' },
-    { label: 'Pending Orders', value: pendingOrdersCount.toString(), trend: '-2.4%', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50', link: '/admin-orders' },
-    { label: 'Live Inventory', value: liveInventoryCount.toString(), trend: '+5.1%', icon: Package, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/admin-inventory' },
+    { label: 'Monthly Revenue', value: formattedRevenue, trend: '+12.5%', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50', page: Page.AdminOrders },
+    { label: 'Active Inquiries', value: activeInquiriesCount.toString(), trend: '+8.2%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', page: Page.AdminLeads },
+    { label: 'Pending Orders', value: pendingOrdersCount.toString(), trend: '-2.4%', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50', page: Page.AdminOrders },
+    { label: 'Live Inventory', value: liveInventoryCount.toString(), trend: '+5.1%', icon: Package, color: 'text-indigo-600', bg: 'bg-indigo-50', page: Page.AdminInventory },
   ];
 
   // Chart Data Calculation (Last 12 Months)
@@ -117,7 +116,7 @@ const AdminOverview: React.FC = () => {
          {stats.map((stat, i) => (
             <div 
                key={i} 
-               onClick={() => navigate(stat.link)}
+               onClick={() => onNavigate && onNavigate(stat.page)}
                className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-xl transition-all group cursor-pointer"
             >
                <div className="flex justify-between items-start mb-6">

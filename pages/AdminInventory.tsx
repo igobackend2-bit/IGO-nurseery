@@ -15,7 +15,7 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
 
   const handleEditClick = (product: StoreProduct) => {
     setEditingProduct(product);
-    setEditForm({ name: product.name, price: product.price, description: product.description, category: product.category, image: product.image });
+    setEditForm({ name: product.name, price: product.price, description: product.description, category: product.category, image: product.image, stock: product.stock || 0, outOfStock: product.outOfStock });
   };
 
   const handleSaveEdit = async () => {
@@ -147,6 +147,12 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
            >
              Reset Catalog
            </button>
+           <button 
+             onClick={() => window.location.href = '/add-product'}
+             className="px-6 py-2 bg-igo-lime text-igo-dark rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-white transition-all flex items-center gap-2"
+           >
+             <Package className="w-3 h-3" /> Add Product
+           </button>
         </div>
       </div>
 
@@ -184,21 +190,26 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                   </td>
                   <td className="p-8 text-center font-black text-igo-dark italic">₹{product.price}</td>
                   <td className="p-8">
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-2">
                       {product.isArchived ? (
                         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-xl border border-gray-200">
                           <X className="w-4 h-4" />
                           <span className="text-[10px] font-black uppercase tracking-widest">Archived</span>
                         </div>
-                      ) : product.outOfStock ? (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl border border-red-100 animate-pulse">
+                      ) : product.outOfStock || (product.stock !== undefined && product.stock <= 0) ? (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl border border-red-100 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]">
                           <AlertCircle className="w-4 h-4" />
                           <span className="text-[10px] font-black uppercase tracking-widest">Out of Stock</span>
+                        </div>
+                      ) : (product.stock !== undefined && product.stock < 5) ? (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl border border-orange-100 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.2)]">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Low Stock ({product.stock})</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-xl border border-green-100">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Active Stock</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest">In Stock ({product.stock || 0})</span>
                         </div>
                       )}
                     </div>
@@ -282,13 +293,22 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Price (₹)</label>
                   <input 
                     type="number" 
                     value={editForm.price || 0} 
                     onChange={e => setEditForm({ ...editForm, price: Number(e.target.value) })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-igo-dark"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Stock Qty</label>
+                  <input 
+                    type="number" 
+                    value={editForm.stock || 0} 
+                    onChange={e => setEditForm({ ...editForm, stock: Number(e.target.value), outOfStock: Number(e.target.value) <= 0 })}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-igo-dark"
                   />
                 </div>
