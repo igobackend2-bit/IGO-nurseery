@@ -54,29 +54,26 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categoryGroups: Record<string, string[]> = {
-    'Indoor': ['Indoor'],
-    'Outdoor': ['Outdoor', 'Herbs', 'Vegetables', 'Fruits'],
-    'Landscape': ['Creepers', 'Landscape'],
-    'Exotic': ['Cactus & Succulent', 'Exotic'],
-    'Accessories': ['Tools', 'Support', 'Growing Media', 'Infrastructure', 'Containers']
-  };
-
-  // The main buttons shown on the UI, exactly like the original website
-  const categories = ['All', 'Indoor', 'Outdoor', 'Landscape', 'Exotic', 'Accessories'];
+  const categories = [
+    'All',
+    'Outdoor',
+    'Indoor',
+    'Herbs',
+    'Creepers',
+    'Vegetables',
+    'Fruits',
+    'Cactus & Succulent',
+    'Tools',
+    'Support',
+    'Growing Media',
+    'Infrastructure',
+    'Containers'
+  ];
 
   const filteredProducts = (products || []).filter((product) => {
     if (!product || product.isArchived) return false;
     
-    let mainCategory = product.category;
-    for (const [groupName, subCategories] of Object.entries(categoryGroups)) {
-      if (subCategories.includes(product.category)) {
-        mainCategory = groupName;
-        break;
-      }
-    }
-
-    const categoryMatch = filter === 'All' || mainCategory === filter;
+    const categoryMatch = filter === 'All' || product.category === filter;
     const query = searchQuery.trim().toLowerCase();
     const searchMatch = query.length === 0 || (product.name && product.name.toLowerCase().includes(query));
     return categoryMatch && searchMatch;
