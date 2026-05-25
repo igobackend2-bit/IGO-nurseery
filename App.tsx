@@ -21,6 +21,7 @@ import AdminLeads from './pages/AdminLeads';
 import AdminOverview from './pages/AdminOverview';
 import AdminLayout from './components/AdminLayout';
 import AdminLogin from './pages/AdminLogin';
+import AdminProducts from './pages/AdminProducts';
 import AdminInventory from './pages/AdminInventory';
 import CustomerAuth from './pages/CustomerAuth';
 import CustomerProfile from './pages/CustomerProfile';
@@ -31,6 +32,7 @@ import { Bell, CheckCircle2, X } from 'lucide-react';
 import { INITIAL_STORE_PRODUCTS } from './data/storeProducts';
 import { KNOWLEDGE_ARTICLES } from './data/knowledgeArticles';
 import { sendOrderConfirmationEmail, sendAdminOrderNotification } from './services/orderEmailService';
+import LeadCapturePopup from './components/LeadCapturePopup';
 
 interface ParsedRoute {
   page: Page;
@@ -240,6 +242,15 @@ const parseLocationToRoute = (): ParsedRoute => {
       productSlug: null,
       knowledgeArticleId: null,
       canonicalPath: '/admin-inventory',
+    };
+  }
+
+  if (first === 'admin-products') {
+    return {
+      page: Page.AdminProducts,
+      productSlug: null,
+      knowledgeArticleId: null,
+      canonicalPath: '/admin-products',
     };
   }
 
@@ -837,6 +848,7 @@ const App: React.FC = () => {
         );
       case Page.AdminOrders:
       case Page.AdminLeads:
+      case Page.AdminProducts:
       case Page.AdminInventory:
       case Page.AdminOverview:
       case Page.AdminNotifications:
@@ -870,6 +882,13 @@ const App: React.FC = () => {
             case Page.AdminInventory:
               return (
                 <AdminInventory 
+                  products={products} 
+                  onUpdateProducts={setProducts} 
+                />
+              );
+            case Page.AdminProducts:
+              return (
+                <AdminProducts 
                   products={products} 
                   onUpdateProducts={setProducts} 
                 />
@@ -911,6 +930,7 @@ const App: React.FC = () => {
   const isAdminRoute = [
     Page.AdminOrders,
     Page.AdminLeads,
+    Page.AdminProducts,
     Page.AdminInventory,
     Page.AdminOverview,
     Page.AdminNotifications,
@@ -958,6 +978,7 @@ const App: React.FC = () => {
       )}
 
       {!isAdminRoute && <Footer setCurrentPage={handlePageChange} />}
+      {!isAdminRoute && <LeadCapturePopup />}
     </div>
   );
 };

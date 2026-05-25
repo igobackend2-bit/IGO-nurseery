@@ -50,7 +50,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: Page.AdminOverview, label: 'Command Center', icon: Activity },
     { id: Page.AdminOrders, label: 'Order Stream', icon: Package },
     { id: Page.AdminLeads, label: 'CRM Inquiries', icon: Users },
-    { id: Page.AdminInventory, label: 'Stock & Remove', icon: Package },
+    { id: Page.AdminProducts, label: 'Products', icon: Package },
+    { id: Page.AdminInventory, label: 'Stock & Remove', icon: ShoppingBag },
     { id: Page.AddProduct, label: 'Add New Product', icon: PlusCircle },
   ];
 

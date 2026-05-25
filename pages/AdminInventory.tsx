@@ -10,28 +10,7 @@ interface AdminInventoryProps {
 
 const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProducts }) => {
   const [filter, setFilter] = useState<'all' | 'out' | 'archived'>('all');
-  const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
-  const [editForm, setEditForm] = useState<Partial<StoreProduct>>({});
   const [inlineStock, setInlineStock] = useState<Record<string, number>>({});
-
-  const handleEditClick = (product: StoreProduct) => {
-    setEditingProduct(product);
-    setEditForm({ name: product.name, price: product.price, description: product.description, category: product.category, image: product.image, stock: product.stock || 0, outOfStock: product.outOfStock });
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingProduct) return;
-    const success = await productApi.updateProduct(editingProduct.id, editForm);
-    if (!success) {
-      alert('Failed to update product in database.');
-      return;
-    }
-    const updatedProducts = products.map(p => 
-      p.id === editingProduct.id ? { ...p, ...editForm } : p
-    );
-    onUpdateProducts(updatedProducts);
-    setEditingProduct(null);
-  };
 
   const handleInlineStockChange = (productId: string, val: number) => {
     setInlineStock(prev => ({ ...prev, [productId]: Math.max(0, val) }));
@@ -318,20 +297,6 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                           >
                             <AlertCircle className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleEditClick(product)}
-                            className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-igo-dark hover:text-white transition-all shadow-sm border border-gray-200"
-                            title="Edit Product Details"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => toggleArchive(product.id)}
-                            className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
-                            title="Delete (Move to Trash)"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
                         </>
                       ) : (
                         <>
@@ -358,119 +323,8 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
           </table>
         </div>
       </div>
+    </div>
 
-      {/* Edit Modal */}
-      {editingProduct && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl relative">
-            <button 
-              onClick={() => setEditingProduct(null)}
-              className="absolute top-6 right-6 text-gray-400 hover:text-red-500"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            
-            <h3 className="text-2xl font-black uppercase text-igo-dark mb-6">Edit Asset</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Name</label>
-                <input 
-                  type="text" 
-                  value={editForm.name || ''} 
-                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-igo-dark"
-                />
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Price (₹)</label>
-                  <input 
-                    type="number" 
-                    value={editForm.price || 0} 
-                    onChange={e => setEditForm({ ...editForm, price: Number(e.target.value) })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-igo-dark"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Stock Qty</label>
-                  <input 
-                    type="number" 
-                    value={editForm.stock || 0} 
-                    onChange={e => setEditForm({ ...editForm, stock: Number(e.target.value), outOfStock: Number(e.target.value) <= 0 })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-igo-dark"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Category</label>
-                  <input 
-                    type="text" 
-                    value={editForm.category || ''} 
-                    onChange={e => setEditForm({ ...editForm, category: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-igo-dark"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Image URL</label>
-                  <input 
-                    type="text" 
-                    value={editForm.image || ''} 
-                    onChange={e => setEditForm({ ...editForm, image: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Upload Image</label>
-                  <label className="w-full px-4 py-3 bg-gray-50 border border-dashed border-gray-300 rounded-xl flex items-center gap-2 cursor-pointer hover:border-igo-lime transition-all">
-                    <ImagePlus className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-500 font-bold overflow-hidden text-ellipsis whitespace-nowrap">
-                      {editForm.image?.startsWith('data:image') ? 'Image selected' : 'Choose file'}
-                    </span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          if (typeof reader.result === 'string') {
-                            setEditForm({ ...editForm, image: reader.result });
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }} 
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Description</label>
-                <textarea 
-                  value={editForm.description || ''} 
-                  onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm h-32 resize-none"
-                />
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <button 
-                  onClick={handleSaveEdit}
-                  className="flex-1 bg-igo-lime text-igo-dark py-4 rounded-xl font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-md"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
