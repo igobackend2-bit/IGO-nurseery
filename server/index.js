@@ -937,9 +937,9 @@ export const handler = async (request, response) => {
 // Standard Node.js Server Startup
 if (!process.env.VERCEL) {
   const server = http.createServer(handler);
-  // Use Railway's PORT env var, fallback to API_PORT for local dev
+  // Use Hostinger Passenger PORT env var, fallback to API_PORT for local dev
   const LISTEN_PORT = Number(process.env.PORT || API_PORT);
-  server.listen(LISTEN_PORT, '0.0.0.0', () => {
+  server.listen(LISTEN_PORT, () => {
     console.log(`IGO backend API running on port ${LISTEN_PORT}`);
   });
 }
