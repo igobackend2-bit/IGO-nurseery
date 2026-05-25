@@ -204,28 +204,28 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                     </div>
                   </td>
                   <td className="p-8">
-                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.category}</p>
+                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{product.category}</p>
                   </td>
                   <td className="p-8">
-                     <div className="flex items-center justify-center gap-3">
+                     <div className="flex items-center justify-center gap-2">
                         <button 
                           onClick={() => handleInlineStockChange(product.id, stockVal - 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-200 hover:text-igo-dark transition-colors"
+                          className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 hover:text-igo-dark transition-colors shadow-sm"
                         >
                            <Minus className="w-3 h-3" />
                         </button>
-                        <div className="relative">
+                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-igo-lime">
                            <input 
                              type="number"
                              value={stockVal}
                              onChange={(e) => handleInlineStockChange(product.id, parseInt(e.target.value) || 0)}
-                             className="w-20 px-3 py-2 text-center text-sm font-black text-igo-dark bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-igo-lime"
+                             className="w-16 px-2 py-2 text-center text-sm font-black text-igo-dark bg-transparent border-none focus:outline-none focus:ring-0"
                            />
-                           <span className="absolute right-[-24px] top-1/2 -translate-y-1/2 text-[9px] font-black text-gray-300 uppercase tracking-widest">Qty</span>
+                           <span className="pr-3 text-[10px] font-black text-gray-400 uppercase tracking-widest pointer-events-none">Qty</span>
                         </div>
                         <button 
                           onClick={() => handleInlineStockChange(product.id, stockVal + 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-200 hover:text-igo-dark transition-colors mr-6"
+                          className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 hover:text-igo-dark transition-colors shadow-sm mr-4"
                         >
                            <Plus className="w-3 h-3" />
                         </button>
