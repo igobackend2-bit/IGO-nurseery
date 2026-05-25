@@ -117,11 +117,15 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
         <div className="text-sm text-gray-500 mb-6">Showing {filteredProducts.length} plants</div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product) => {
+            const isOutOfStock = product.outOfStock || (product.stock !== undefined && product.stock <= 0);
+            const isLowStock = !isOutOfStock && product.stock !== undefined && product.stock < 20;
+            
+            return (
             <div 
               key={product.id} 
               onClick={() => onOpenProduct && onOpenProduct(product.slug || product.name.toLowerCase().replace(/ /g, '-'))}
-              className={`group cursor-pointer ${product.outOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
+              className={`group cursor-pointer ${isOutOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
             >
               <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 mb-4">
                 <img
@@ -134,13 +138,21 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 
-                {product.outOfStock && (
+                {isOutOfStock && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
                     <div className="bg-white px-4 py-2 rounded-xl shadow-2xl">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 flex items-center gap-2">
                         <AlertCircle className="w-3 h-3" /> Out of Stock
                       </p>
                     </div>
+                  </div>
+                )}
+                
+                {!isOutOfStock && isLowStock && (
+                  <div className="absolute bottom-4 left-4 z-10">
+                     <span className="bg-orange-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Low Stock ({product.stock})
+                     </span>
                   </div>
                 )}
 
@@ -151,13 +163,13 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
                 </div>
                 
                 <button
-                  disabled={product.outOfStock}
+                  disabled={isOutOfStock}
                   onClick={(event) => {
                     event.stopPropagation();
-                    if (!product.outOfStock) addToCart(product);
+                    if (!isOutOfStock) addToCart(product);
                   }}
-                  className={`absolute bottom-4 right-4 p-4 rounded-2xl shadow-xl transition-all duration-300 ${
-                    product.outOfStock 
+                  className={`absolute bottom-4 right-4 p-4 rounded-2xl shadow-xl transition-all duration-300 z-10 ${
+                    isOutOfStock 
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50' 
                       : 'bg-white translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-green-700 hover:text-white'
                   }`}
@@ -168,21 +180,21 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
 
               <div className="space-y-1">
                 <div className="flex justify-between items-start gap-3">
-                  <h3 className={`text-lg font-bold leading-tight ${product.outOfStock ? 'text-gray-400' : 'text-gray-900'}`}>{product.name}</h3>
-                  {!product.outOfStock && (
+                  <h3 className={`text-lg font-bold leading-tight ${isOutOfStock ? 'text-gray-400' : 'text-gray-900'}`}>{product.name}</h3>
+                  {!isOutOfStock && (
                     <div className="flex items-center text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded">
                       <Star className="w-3 h-3 fill-current mr-1" /> 4.9
                     </div>
                   )}
                 </div>
-                <p className={`text-xs font-semibold ${product.outOfStock ? 'text-gray-300' : 'text-green-700'}`}>{product.category}</p>
+                <p className={`text-xs font-semibold ${isOutOfStock ? 'text-gray-300' : 'text-green-700'}`}>{product.category}</p>
                 <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
-                <div className={`text-lg font-bold pt-2 ${product.outOfStock ? 'text-gray-300 line-through' : 'text-green-700'}`}>
+                <div className={`text-lg font-bold pt-2 ${isOutOfStock ? 'text-gray-300 line-through' : 'text-green-700'}`}>
                   {formatCurrency(product.price)}
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
 

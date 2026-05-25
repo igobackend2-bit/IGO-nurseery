@@ -35,13 +35,24 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
   const toggleStock = async (productId: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
-    const newStatus = !product.outOfStock;
+    
+    const currentStock = product.stock || 0;
+    const input = window.prompt(`Enter real-time stock quantity for ${product.name}:`, currentStock.toString());
+    if (input === null) return; // Cancelled
+    
+    const newStock = parseInt(input, 10);
+    if (isNaN(newStock) || newStock < 0) {
+      alert('Invalid stock. Please enter a valid number (0 or higher).');
+      return;
+    }
+    
+    const newOutOfStock = newStock === 0;
     
     const updatedProducts = products.map(p => 
-      p.id === productId ? { ...p, outOfStock: newStatus } : p
+      p.id === productId ? { ...p, stock: newStock, outOfStock: newOutOfStock } : p
     );
     onUpdateProducts(updatedProducts);
-    await productApi.updateProduct(productId, { outOfStock: newStatus });
+    await productApi.updateProduct(productId, { stock: newStock, outOfStock: newOutOfStock });
   };
 
   const toggleArchive = async (productId: string) => {
@@ -201,7 +212,7 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                           <AlertCircle className="w-4 h-4" />
                           <span className="text-[10px] font-black uppercase tracking-widest">Out of Stock</span>
                         </div>
-                      ) : (product.stock !== undefined && product.stock < 5) ? (
+                      ) : (product.stock !== undefined && product.stock < 20) ? (
                         <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl border border-orange-100 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.2)]">
                           <AlertCircle className="w-4 h-4" />
                           <span className="text-[10px] font-black uppercase tracking-widest">Low Stock ({product.stock})</span>
@@ -221,12 +232,12 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
                           <button
                             onClick={() => toggleStock(product.id)}
                             className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-md active:scale-95 ${
-                              product.outOfStock
-                                ? 'bg-igo-lime text-igo-dark hover:shadow-lg hover:shadow-igo-lime/20'
+                              product.outOfStock || (product.stock !== undefined && product.stock <= 0)
+                                ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
                                 : 'bg-igo-dark text-white hover:bg-gray-800'
                             }`}
                           >
-                            {product.outOfStock ? 'Restock' : 'Out of Stock'}
+                            Update Stock
                           </button>
                           <button
                             onClick={() => handleEditClick(product)}
