@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -13,14 +13,89 @@ import {
   Cpu,
   Activity
 } from 'lucide-react';
+import { productApi } from '../services/productApi';
+import { Order, Lead, StoreProduct } from '../types';
 
 const AdminOverview: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const fetchedProducts = await productApi.fetchProducts();
+        setProducts(fetchedProducts);
+      } catch (e) {
+        console.error('Failed to fetch products', e);
+      }
+
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      setOrders(localOrders);
+
+      const localLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
+      setLeads(localLeads);
+    };
+    fetchStats();
+  }, []);
+
+  const navigate = (path: string) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new Event('popstate'));
+  };
+
+  // Calculations
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const revenue = orders
+    .filter(o => new Date(o.createdAt).getMonth() === currentMonth && new Date(o.createdAt).getFullYear() === currentYear && o.status !== 'cancelled')
+    .reduce((sum, o) => sum + o.total, 0);
+    
+  const formattedRevenue = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(revenue);
+
+  const activeInquiriesCount = leads.filter(l => ['new', 'contacted', 'pending'].includes(l.status)).length;
+  const pendingOrdersCount = orders.filter(o => o.status === 'processing').length;
+  const liveInventoryCount = products.filter(p => !p.isArchived).length;
+
   const stats = [
-    { label: 'Monthly Revenue', value: '₹4,82,900', trend: '+12.5%', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Active Inquiries', value: '842', trend: '+8.2%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Pending Orders', value: '156', trend: '-2.4%', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: 'Live Inventory', value: '1,248', trend: '+5.1%', icon: Package, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Monthly Revenue', value: formattedRevenue, trend: '+12.5%', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50', link: '/admin-orders' },
+    { label: 'Active Inquiries', value: activeInquiriesCount.toString(), trend: '+8.2%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', link: '/admin-leads' },
+    { label: 'Pending Orders', value: pendingOrdersCount.toString(), trend: '-2.4%', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50', link: '/admin-orders' },
+    { label: 'Live Inventory', value: liveInventoryCount.toString(), trend: '+5.1%', icon: Package, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/admin-inventory' },
   ];
+
+  // Chart Data Calculation (Last 12 Months)
+  const last12Months = Array.from({length: 12}).map((_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (11 - i));
+      return d;
+  });
+
+  const chartData = last12Months.map(date => {
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      
+      const monthOrders = orders.filter(o => {
+          const oDate = new Date(o.createdAt);
+          return oDate.getMonth() === month && oDate.getFullYear() === year;
+      }).length;
+
+      const monthLeads = leads.filter(l => {
+          const lDate = new Date(l.createdAt || Date.now());
+          return lDate.getMonth() === month && lDate.getFullYear() === year;
+      }).length;
+
+      const total = monthOrders + monthLeads;
+      return {
+          monthLabel: date.toLocaleDateString('default', { month: 'short' }),
+          orders: monthOrders,
+          leads: monthLeads,
+          total
+      };
+  });
+
+  const maxTotal = Math.max(...chartData.map(d => d.total), 1);
 
   return (
     <div className="p-10 space-y-10 animate-in fade-in duration-500">
@@ -40,7 +115,11 @@ const AdminOverview: React.FC = () => {
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
          {stats.map((stat, i) => (
-            <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+            <div 
+               key={i} 
+               onClick={() => navigate(stat.link)}
+               className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-xl transition-all group cursor-pointer"
+            >
                <div className="flex justify-between items-start mb-6">
                   <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
                      <stat.icon className="w-7 h-7" />
@@ -57,7 +136,7 @@ const AdminOverview: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-         {/* Performance Overview (Placeholder Chart) */}
+         {/* Performance Overview (Real Chart) */}
          <div className="lg:col-span-2 bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100 min-h-[400px] flex flex-col">
             <div className="flex justify-between items-center mb-10">
                <div>
@@ -69,19 +148,30 @@ const AdminOverview: React.FC = () => {
                </button>
             </div>
             
-            {/* Mock Chart Visual */}
-            <div className="flex-grow flex items-end justify-between gap-4 py-4">
-               {[40, 70, 45, 90, 65, 80, 100, 50, 75, 60, 85, 95].map((h, i) => (
-                  <div key={i} className="flex-grow group relative">
+            {/* Real Chart Visual */}
+            <div className="flex-grow flex items-end justify-between gap-4 py-4 h-64">
+               {chartData.map((data, i) => {
+                  const heightPercent = Math.max((data.total / maxTotal) * 100, 2); // min height 2% for visibility
+                  return (
+                  <div key={i} className="flex-grow group relative h-full flex items-end">
                      <div 
-                       className="w-full bg-gray-50 group-hover:bg-igo-lime rounded-full transition-all duration-500" 
-                       style={{ height: `${h}%` }}
-                     ></div>
-                     <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-igo-dark">Month {i+1}</span>
+                       className="w-full bg-gray-100 group-hover:bg-igo-lime rounded-t-xl transition-all duration-500 relative flex flex-col justify-end overflow-hidden" 
+                       style={{ height: `${heightPercent}%` }}
+                     >
+                        {data.total > 0 && (
+                           <div className="absolute inset-x-0 bottom-0 bg-igo-dark/10" style={{ height: `${(data.orders / data.total) * 100}%` }}></div>
+                        )}
+                     </div>
+                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 bg-igo-dark text-white px-3 py-2 rounded-xl text-[10px] font-bold shadow-xl pointer-events-none">
+                        <span className="text-igo-lime block mb-1">{data.monthLabel}</span>
+                        {data.orders} Orders • {data.leads} Inquiries
                      </div>
                   </div>
-               ))}
+               )})}
+            </div>
+            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4">
+               <span>12 Months Ago</span>
+               <span>Current Month</span>
             </div>
          </div>
 
