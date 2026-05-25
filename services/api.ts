@@ -4,6 +4,47 @@ import { OrderData } from '../pages/Checkout';
 export const ADMIN_TOKEN_STORAGE_KEY = 'igo-admin-token';
 export const CUSTOMER_ORDER_REFS_STORAGE_KEY = 'igo-customer-order-refs';
 
+// ─── Supabase → App format normalizer ────────────────────────────────────────
+// Supabase returns snake_case with nested `order_items`; the app expects camelCase with `items: CartItem[]`.
+export const normalizeOrder = (raw: any): Order => {
+  const items: CartItem[] = (raw.order_items || []).map((oi: any) => ({
+    product: {
+      id:          oi.product_id   || oi.products?.id          || '',
+      name:        oi.product_name || oi.products?.name        || 'Product',
+      price:       Number(oi.price ?? oi.products?.price ?? 0),
+      category:    oi.product_category || oi.products?.category || '',
+      image:       oi.product_image    || oi.products?.image    || '',
+      description: oi.products?.description || '',
+    },
+    quantity: Number(oi.quantity ?? 1),
+  }));
+
+  return {
+    id:               String(raw.id            ?? ''),
+    orderNumber:      raw.order_number         ?? raw.orderNumber         ?? '',
+    trackingNumber:   raw.tracking_number      ?? raw.trackingNumber      ?? '',
+    customerName:     raw.customer_name        ?? raw.customerName        ?? 'Customer',
+    customerEmail:    raw.customer_email       ?? raw.customerEmail       ?? '',
+    customerPhone:    raw.customer_phone       ?? raw.customerPhone       ?? '',
+    customerId:       raw.customer_id          ?? raw.customerId,
+    shippingAddress:  raw.shipping_address     ?? raw.shippingAddress     ?? '',
+    city:             raw.city                 ?? '',
+    state:            raw.state                ?? '',
+    zipCode:          raw.zip_code             ?? raw.zipCode             ?? '',
+    items,
+    subtotal:         Number(raw.subtotal       ?? 0),
+    tax:              Number(raw.tax            ?? 0),
+    deliveryCharge:   Number(raw.delivery_charge ?? raw.deliveryCharge ?? 0),
+    total:            Number(raw.total          ?? 0),
+    paymentMethod:    (raw.payment_method ?? raw.paymentMethod ?? 'card') as Order['paymentMethod'],
+    lastFour:         raw.last_four            ?? raw.lastFour,
+    status:           (raw.status ?? 'pending') as Order['status'],
+    createdAt:        raw.order_date           ?? raw.created_at ?? raw.createdAt ?? new Date().toISOString(),
+    estimatedDelivery: raw.estimated_delivery  ?? raw.estimatedDelivery ?? '',
+    deletionRequested: raw.deletion_requested  ?? raw.deletionRequested ?? false,
+  };
+};
+
 export interface AdminSessionResponse {
   token: string;
   admin: {
@@ -56,56 +97,48 @@ export const adminLogout = async (token?: string) => {
 
 export const fetchAdminOrders = async (token: string) => {
   const { supabase } = await import('./supabaseClient');
-  const { data, error } = await supabase.from('orders').select('*, order_items(*, products(*))');
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .order('order_date', { ascending: false });
   if (error) throw new Error(error.message);
-  return { orders: data as any };
+  return { orders: (data ?? []).map(normalizeOrder) };
 };
 
 export const fetchAdminOrder = async (token: string, orderNumber: string) => {
   const { supabase } = await import('./supabaseClient');
-  const { data, error } = await supabase.from('orders').select('*, order_items(*, products(*))').eq('order_number', orderNumber).single();
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .eq('order_number', orderNumber)
+    .single();
   if (error) throw new Error(error.message);
-  return { order: data as any };
+  return { order: normalizeOrder(data) };
 };
 
 export const updateAdminOrderStatus = async (token: string, orderNumber: string, status: Order['status']) => {
   const { supabase } = await import('./supabaseClient');
-  
-  // 1. Fetch full order with items first (for the email)
-  const { data: orderData, error: fetchErr } = await supabase.from('orders').select('*, order_items(*, products(*))').eq('order_number', orderNumber).single();
+
+  // 1. Fetch full order (customer_email is stored directly on the order row now)
+  const { data: orderData, error: fetchErr } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .eq('order_number', orderNumber)
+    .single();
   if (fetchErr) throw new Error(fetchErr.message);
 
-  // 2. Update status
-  const { data, error } = await supabase.from('orders').update({ status }).eq('order_number', orderNumber).select().single();
+  // 2. Update status and return updated row with items
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('order_number', orderNumber)
+    .select('*, order_items(*)')
+    .single();
   if (error) throw new Error(error.message);
-  
-  // 3. Trigger Email via PHP
-  try {
-    const emailPayload = {
-      orderNumber: orderData.order_number,
-      customerName: 'Customer', // If we don't have name easily available
-      status: status,
-      items: orderData.order_items.map((i: any) => ({
-         quantity: i.quantity,
-         price: i.price,
-         product: i.products
-      })),
-      subtotal: orderData.subtotal,
-      deliveryCharge: orderData.delivery_charge,
-      total: orderData.total,
-      estimatedDelivery: orderData.estimated_delivery
-    };
 
-    // Need to get customer email. Let's fetch it if possible.
-    let customerEmail = '';
-    if (orderData.customer_id) {
-       const { data: cData } = await supabase.from('customers').select('email, name').eq('id', orderData.customer_id).single();
-       if (cData) {
-          customerEmail = cData.email;
-          emailPayload.customerName = cData.name;
-       }
-    }
-    
+  // 3. Send status-update email using customer_email stored on the order row
+  try {
+    const customerEmail = orderData.customer_email ?? '';
     if (customerEmail) {
       await fetch('/mailer.php', {
         method: 'POST',
@@ -114,15 +147,28 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
           secret: 'igo_nursery_secret_key_2026',
           type: 'status_update',
           to: customerEmail,
-          order: emailPayload
-        })
+          order: {
+            orderNumber: orderData.order_number,
+            customerName: orderData.customer_name ?? 'Customer',
+            status,
+            items: (orderData.order_items ?? []).map((i: any) => ({
+              name: i.product_name ?? 'Product',
+              quantity: i.quantity,
+              price: i.price,
+            })),
+            subtotal: orderData.subtotal,
+            deliveryCharge: orderData.delivery_charge,
+            total: orderData.total,
+            estimatedDelivery: orderData.estimated_delivery,
+          },
+        }),
       });
     }
   } catch (e) {
     console.error('Failed to send status email:', e);
   }
 
-  return { order: data as any };
+  return { order: normalizeOrder(data) };
 };
 
 export const adminDeleteCustomer = async (token: string, customerId: number) => {
@@ -220,6 +266,37 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
   return { order: payload as any, accessKey: payload.accessKey };
 };
 
+export const mapSupabaseOrder = (dbOrder: any): Order => {
+  return {
+    id: dbOrder.id,
+    orderNumber: dbOrder.order_number,
+    trackingNumber: dbOrder.tracking_number || '',
+    accessKey: dbOrder.access_key,
+    customerId: dbOrder.customer_id,
+    customerName: dbOrder.customer_name || 'Customer',
+    customerEmail: dbOrder.customer_email || '',
+    customerPhone: dbOrder.customer_phone || '',
+    shippingAddress: dbOrder.shipping_address,
+    city: dbOrder.city,
+    state: dbOrder.state,
+    zipCode: dbOrder.zip_code,
+    items: (dbOrder.order_items || []).map((item: any) => ({
+      product: item.products,
+      quantity: item.quantity,
+      price: item.price
+    })),
+    subtotal: dbOrder.subtotal,
+    tax: dbOrder.tax,
+    deliveryCharge: dbOrder.delivery_charge,
+    total: dbOrder.total,
+    paymentMethod: dbOrder.payment_method,
+    lastFour: dbOrder.last_four,
+    status: dbOrder.status,
+    createdAt: dbOrder.created_at,
+    estimatedDelivery: dbOrder.estimated_delivery
+  };
+};
+
 export const fetchCustomerOrders = async (references: CustomerOrderReference[]) => {
   if (!references || references.length === 0) return { orders: [] };
   const { supabase } = await import('./supabaseClient');
@@ -227,10 +304,11 @@ export const fetchCustomerOrders = async (references: CustomerOrderReference[]) 
   
   const { data, error } = await supabase.from('orders')
     .select('*, order_items(*, products(*))')
-    .in('order_number', orderNumbers);
+    .in('order_number', orderNumbers)
+    .order('created_at', { ascending: false });
     
   if (error) throw new Error(error.message);
-  return { orders: data as any };
+  return { orders: (data || []).map(mapSupabaseOrder) };
 };
 
 export const fetchCustomerOrder = async (orderNumber: string, accessKey: string) => {
@@ -242,5 +320,5 @@ export const fetchCustomerOrder = async (orderNumber: string, accessKey: string)
     .single();
     
   if (error) throw new Error(error.message);
-  return { order: data as any };
+  return { order: mapSupabaseOrder(data) };
 };
