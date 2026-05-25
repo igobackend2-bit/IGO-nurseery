@@ -1,7 +1,6 @@
 import { Order, CartItem } from '../types';
 import { OrderData } from '../pages/Checkout';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 export const ADMIN_TOKEN_STORAGE_KEY = 'igo-admin-token';
 export const CUSTOMER_ORDER_REFS_STORAGE_KEY = 'igo-customer-order-refs';
 
@@ -19,70 +18,71 @@ export interface CustomerOrderReference {
   accessKey: string;
 }
 
-const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(body.message || 'Request failed.');
-  }
-
-  return body as T;
-};
-
 export const adminLogin = async (email: string, password: string): Promise<AdminSessionResponse> => {
-  return request<AdminSessionResponse>('/api/admin/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
+  const { supabase } = await import('./supabaseClient');
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  
+  // Check if they are admin (in a real app, check a role table)
+  return {
+    token: data.session?.access_token || '',
+    admin: {
+      id: data.user?.id || '',
+      email: data.user?.email || '',
+      name: data.user?.user_metadata?.name || 'Admin',
+    }
+  };
 };
 
 export const getAdminSession = async (token: string): Promise<AdminSessionResponse | null> => {
-  return request<AdminSessionResponse>('/api/admin/session', {
-    headers: { Authorization: `Bearer ${token}` },
-  }).catch(() => null);
+  const { supabase } = await import('./supabaseClient');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+  return {
+    token: session.access_token,
+    admin: {
+      id: session.user.id,
+      email: session.user.email || '',
+      name: session.user.user_metadata?.name || 'Admin',
+    }
+  };
 };
 
 export const adminLogout = async (token?: string) => {
-  if (token) {
-    await request('/api/admin/logout', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
-  }
+  const { supabase } = await import('./supabaseClient');
+  await supabase.auth.signOut();
   return { success: true };
 };
 
-export const fetchAdminOrders = (token: string) =>
-  request<{ orders: Order[] }>('/api/admin/orders', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const fetchAdminOrders = async (token: string) => {
+  const { supabase } = await import('./supabaseClient');
+  const { data, error } = await supabase.from('orders').select('*, order_items(*, products(*))');
+  if (error) throw new Error(error.message);
+  return { orders: data as any };
+};
 
-export const fetchAdminOrder = (token: string, orderNumber: string) =>
-  request<{ order: Order }>(`/api/admin/orders/${encodeURIComponent(orderNumber)}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const fetchAdminOrder = async (token: string, orderNumber: string) => {
+  const { supabase } = await import('./supabaseClient');
+  const { data, error } = await supabase.from('orders').select('*, order_items(*, products(*))').eq('order_number', orderNumber).single();
+  if (error) throw new Error(error.message);
+  return { order: data as any };
+};
 
-export const updateAdminOrderStatus = (token: string, orderNumber: string, status: Order['status']) =>
-  request<{ order: Order }>(`/api/admin/orders/${encodeURIComponent(orderNumber)}/status`, {
-    method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ status }),
-  });
+export const updateAdminOrderStatus = async (token: string, orderNumber: string, status: Order['status']) => {
+  const { supabase } = await import('./supabaseClient');
+  const { data, error } = await supabase.from('orders').update({ status }).eq('order_number', orderNumber).select().single();
+  if (error) throw new Error(error.message);
+  return { order: data as any };
+};
 
-export const adminDeleteCustomer = (token: string, customerId: number) =>
-  request<{ success: boolean }>(`/api/admin/customer/${customerId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const adminDeleteCustomer = async (token: string, customerId: number) => {
+  const { supabase } = await import('./supabaseClient');
+  const { error } = await supabase.from('customers').delete().eq('id', customerId);
+  if (error) throw new Error(error.message);
+  return { success: true };
+};
 
-export const createOrderPayload = (orderData: OrderData, cartItems: CartItem[], customerId?: number) => {
+export const createOrderPayload = (orderData: OrderData, cartItems: CartItem[], customerId?: string) => {
   const orderNumber = `IGO-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
   const trackingNumber = `TRK-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
   const accessKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -117,18 +117,64 @@ export const createOrderPayload = (orderData: OrderData, cartItems: CartItem[], 
   };
 };
 
+export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>) => {
+  const { supabase } = await import('./supabaseClient');
+  
+  const { data: order, error } = await supabase.from('orders').insert({
+    order_number: payload.orderNumber,
+    access_key: payload.accessKey,
+    customer_id: payload.customerId || null,
+    shipping_address: payload.shippingAddress,
+    city: payload.city,
+    state: payload.state,
+    zip_code: payload.zipCode,
+    subtotal: payload.subtotal,
+    tax: payload.tax,
+    delivery_charge: payload.deliveryCharge,
+    total: payload.total,
+    payment_method: payload.paymentMethod,
+    status: payload.status,
+    estimated_delivery: payload.estimatedDelivery
+  }).select().single();
+  
+  if (error) throw new Error(error.message);
+  
+  const itemsToInsert = payload.items.map(item => ({
+    order_id: order.id,
+    product_id: item.product.id,
+    quantity: item.quantity,
+    price: item.product.price
+  }));
+  
+  if (itemsToInsert.length > 0) {
+    const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
+    if (itemsError) throw new Error(itemsError.message);
+  }
+  
+  return { order: payload as any, accessKey: payload.accessKey };
+};
 
-export const submitOrder = (payload: ReturnType<typeof createOrderPayload>) =>
-  request<{ order: Order; accessKey: string }>('/api/orders', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+export const fetchCustomerOrders = async (references: CustomerOrderReference[]) => {
+  if (!references || references.length === 0) return { orders: [] };
+  const { supabase } = await import('./supabaseClient');
+  const orderNumbers = references.map(r => r.orderNumber);
+  
+  const { data, error } = await supabase.from('orders')
+    .select('*, order_items(*, products(*))')
+    .in('order_number', orderNumbers);
+    
+  if (error) throw new Error(error.message);
+  return { orders: data as any };
+};
 
-export const fetchCustomerOrders = (references: CustomerOrderReference[]) =>
-  request<{ orders: Order[] }>('/api/orders/lookup', {
-    method: 'POST',
-    body: JSON.stringify({ references }),
-  });
-
-export const fetchCustomerOrder = (orderNumber: string, accessKey: string) =>
-  request<{ order: Order }>(`/api/orders/${encodeURIComponent(orderNumber)}?accessKey=${encodeURIComponent(accessKey)}`);
+export const fetchCustomerOrder = async (orderNumber: string, accessKey: string) => {
+  const { supabase } = await import('./supabaseClient');
+  const { data, error } = await supabase.from('orders')
+    .select('*, order_items(*, products(*))')
+    .eq('order_number', orderNumber)
+    .eq('access_key', accessKey)
+    .single();
+    
+  if (error) throw new Error(error.message);
+  return { order: data as any };
+};

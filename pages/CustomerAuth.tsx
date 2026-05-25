@@ -54,20 +54,17 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
           onLogin(loginRes);
         }
       } else if (mode === 'signup') {
-        const signupRes = await customerApi.signup({ 
+        await customerApi.signup({ 
           name: formData.name.trim(), 
           email, 
           password, 
           phone: formData.phone.trim() 
         });
-        if (signupRes.needsVerification) {
-          setMode('verify');
-          setSuccess('Signup initiated! Verification code sent to your email.');
-          setTimeout(() => setSuccess(null), 3000);
-        } else {
-          const session = await customerApi.login({ email, password });
-          onLogin(session);
-        }
+        
+        // Supabase ALWAYS sends a verification email/OTP by default
+        setMode('verify');
+        setSuccess('Signup initiated! Verification code sent to your email.');
+        setTimeout(() => setSuccess(null), 3000);
       } else if (mode === 'verify') {
         const session = await customerApi.verifyOtp({ email, otp: formData.otp.trim() });
         if (session && session.token) {

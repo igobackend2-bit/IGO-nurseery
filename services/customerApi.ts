@@ -105,148 +105,157 @@ export const customerApi = {
   },
 
   async signup(data: any) {
-    const res = await fetch(`${API_BASE}/customer/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      let message = 'Signup failed';
-      try {
-        const errorData = await res.json();
-        message = errorData.message || message;
-      } catch (e) {
-        // Handle non-JSON errors (e.g. 404, 405, 500)
-        message = `Server error ${res.status}: ${res.statusText || 'Unexpected response'}`;
+    const { supabase } = await import('./supabaseClient');
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          name: data.name,
+          phone: data.phone
+        }
       }
-      throw new Error(message);
+    });
+    
+    if (error) {
+      throw new Error(error.message);
     }
-    return res.json();
+    
+    // Attempt to insert customer profile directly
+    if (authData.user) {
+      const { error: dbError } = await supabase.from('customers').insert({
+        id: authData.user.id,
+        email: data.email,
+        name: data.name,
+        phone: data.phone
+      });
+      if (dbError && dbError.code !== '23505') { // ignore duplicate key if they re-signup
+         console.error('Customer profile insertion failed:', dbError);
+      }
+    }
+    
+    return { message: 'Signup initiated. Please check your email for the OTP.' };
   },
 
   async verifyOtp(data: { email: string; otp: string }) {
-    const res = await fetch(`${API_BASE}/customer/verify-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+    const { supabase } = await import('./supabaseClient');
+    const { data: authData, error } = await supabase.auth.verifyOtp({
+      email: data.email,
+      token: data.otp,
+      type: 'signup'
     });
-    if (!res.ok) {
-      let message = 'Verification failed';
-      try {
-        const errorData = await res.json();
-        message = errorData.message || message;
-      } catch (e) {
-        message = `Server error ${res.status}: ${res.statusText || 'Unexpected response'}`;
-      }
-      throw new Error(message);
+    
+    if (error) {
+      throw new Error(error.message);
     }
-    const result = await res.json();
-    if (result.token) {
-      localStorage.setItem('igo_customer_token', result.token);
+    
+    if (authData.session) {
+      localStorage.setItem('igo_customer_token', authData.session.access_token);
     }
-    return result;
+    return { token: authData.session?.access_token, customer: authData.user };
   },
 
   async login(credentials: any) {
-    const res = await fetch(`${API_BASE}/customer/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
+    const { supabase } = await import('./supabaseClient');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password
     });
-    if (!res.ok) {
-      let message = 'Login failed';
-      try {
-        const errorData = await res.json();
-        message = errorData.message || message;
-      } catch (e) {
-        message = `Server error ${res.status}: ${res.statusText || 'Unexpected response'}`;
-      }
-      throw new Error(message);
+    
+    if (error) {
+      throw new Error(error.message);
     }
-    const data = await res.json();
-    if (data.token) {
-      localStorage.setItem('igo_customer_token', data.token);
+    
+    if (data.session) {
+      localStorage.setItem('igo_customer_token', data.session.access_token);
     }
-    return data;
+    return { token: data.session?.access_token, customer: data.user };
   },
 
   async getSession() {
-    const res = await fetch(`${API_BASE}/customer/session`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) {
-      return null;
+    const { supabase } = await import('./supabaseClient');
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      return { token: data.session.access_token, customer: data.session.user };
     }
-    return res.json();
+    return null;
   },
 
-  async updateSettings(settings: { name: string; phone: string; emailNotifications: boolean }): Promise<{ customer: Customer }> {
-    const res = await fetch(`${API_BASE}/customer/settings`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(settings),
+  async updateSettings(settings: { name: string; phone: string; emailNotifications: boolean }) {
+    const { supabase } = await import('./supabaseClient');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not logged in');
+    
+    // Update auth metadata
+    await supabase.auth.updateUser({
+      data: { name: settings.name, phone: settings.phone }
     });
-    if (!res.ok) throw new Error('Settings update failed');
-    return res.json();
+    
+    // Update customers table
+    const { data, error } = await supabase.from('customers').update({
+      name: settings.name,
+      phone: settings.phone
+    }).eq('id', user.id).select().single();
+    
+    if (error) throw new Error(error.message);
+    return { customer: data };
   },
 
   async changePassword(data: any): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/customer/password`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
+    const { supabase } = await import('./supabaseClient');
+    const { error } = await supabase.auth.updateUser({
+      password: data.newPassword
     });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'Password update failed');
-    }
-    return res.json();
+    if (error) throw new Error(error.message);
+    return { success: true };
   },
 
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const res = await fetch(`${API_BASE}/customer/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    return res.json();
+    const { supabase } = await import('./supabaseClient');
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw new Error(error.message);
+    return { message: 'Password reset email sent' };
   },
 
   async resetPassword(data: any): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/customer/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+    const { supabase } = await import('./supabaseClient');
+    const { error } = await supabase.auth.updateUser({
+      password: data.password
     });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || 'Password reset failed');
-    }
-    return res.json();
+    if (error) throw new Error(error.message);
+    return { success: true };
   },
 
   async logout() {
-    await fetch(`${API_BASE}/customer/logout`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
+    const { supabase } = await import('./supabaseClient');
+    await supabase.auth.signOut();
     localStorage.removeItem('igo_customer_token');
   },
 
   async getProfile() {
-    const res = await fetch(`${API_BASE}/customer/profile`, {
-      headers: getHeaders(),
-    });
-    return res.json();
+    const { supabase } = await import('./supabaseClient');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { customer: null };
+    
+    const { data } = await supabase.from('customers').select('*').eq('id', user.id).single();
+    return { customer: data || user };
   },
 
   async updateProfile(data: any) {
-    const res = await fetch(`${API_BASE}/customer/profile`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return res.json();
+    const { supabase } = await import('./supabaseClient');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not logged in');
+    
+    await supabase.auth.updateUser({ data: { name: data.name, phone: data.phone } });
+    
+    const { data: dbData, error } = await supabase.from('customers')
+      .update(data)
+      .eq('id', user.id)
+      .select()
+      .single();
+      
+    if (error) throw new Error(error.message);
+    return { customer: dbData };
   },
 
   async getOrders(): Promise<{ orders: Order[] }> {
