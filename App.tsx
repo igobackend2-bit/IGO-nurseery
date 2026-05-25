@@ -369,6 +369,7 @@ const App: React.FC = () => {
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
   const [customerNotifications, setCustomerNotifications] = useState<Notification[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const [cartPopupProduct, setCartPopupProduct] = useState<StoreProduct | null>(null);
 
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
     setToast({ message, type });
@@ -526,7 +527,12 @@ const App: React.FC = () => {
       return [...previousItems, { product, quantity: 1 }];
     });
     
-    showToast(`Added ${product.name} to your cart!`, 'success');
+    setCartPopupProduct(product);
+    
+    // Auto close popup after 3 seconds
+    setTimeout(() => {
+      setCartPopupProduct(null);
+    }, 3000);
   };
 
   const handleIncreaseQuantity = (productId: string) => {
@@ -963,6 +969,41 @@ const App: React.FC = () => {
         {renderPage()}
       </main>
       
+      {/* Cart Popup */}
+      {cartPopupProduct && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setCartPopupProduct(null)} />
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative z-10 animate-in zoom-in slide-in-from-bottom-8 duration-500">
+            <button onClick={() => setCartPopupProduct(null)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              </div>
+              <h3 className="text-2xl font-black text-igo-dark uppercase tracking-tighter mb-2">Added to Cart!</h3>
+              <p className="text-sm text-gray-500 font-medium mb-6">
+                <span className="font-bold text-igo-dark">{cartPopupProduct.name}</span> has been added to your shopping cart.
+              </p>
+              <div className="flex w-full gap-4">
+                <button 
+                  onClick={() => setCartPopupProduct(null)}
+                  className="flex-1 py-4 bg-gray-50 text-gray-600 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-colors"
+                >
+                  Keep Shopping
+                </button>
+                <button 
+                  onClick={() => { setCartPopupProduct(null); handlePageChange(Page.Cart); }}
+                  className="flex-1 py-4 bg-igo-lime text-igo-dark rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-igo-dark hover:text-white transition-all shadow-lg"
+                >
+                  View Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast System - "Pop up" for Notifications */}
       {toast && (
         <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-right-10 duration-500">
