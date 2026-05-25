@@ -324,8 +324,6 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
         </div>
       </div>
     </div>
-
-    </div>
   );
 };
 
