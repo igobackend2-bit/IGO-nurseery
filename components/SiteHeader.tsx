@@ -267,62 +267,13 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                 {customer ? (
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setIsProfileOpen(!isProfileOpen)}
-                      className="p-2.5 text-igo-dark hover:bg-gray-50 rounded-xl transition-colors relative"
+                      onClick={() => handleNav(Page.CustomerProfile, 'account')}
+                      className="p-2.5 text-igo-dark hover:bg-gray-50 rounded-xl transition-colors relative flex items-center gap-2"
+                      title="My Profile"
                     >
                       <User className="w-5 h-5" />
+                      <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block truncate max-w-[100px]">{customer.name}</span>
                     </button>
-
-                    {isProfileOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[100] animate-in fade-in slide-in-from-top-2">
-                        <div className="px-4 py-3 border-b border-gray-50 mb-2">
-                          <p className="text-xs text-igo-muted font-bold uppercase tracking-widest">Signed in as</p>
-                          <p className="text-sm font-black text-igo-dark truncate">{customer.name}</p>
-                        </div>
-                        
-                        <button
-                          onClick={() => { handleNav(Page.CustomerProfile, 'account'); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-igo-dark hover:bg-igo-lime/10 transition-colors text-left"
-                        >
-                          <User className="w-4 h-4 text-igo-lime" />
-                          Account Details
-                        </button>
-                        
-                        <button
-                          onClick={() => { handleNav(Page.CustomerProfile, 'orders'); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-igo-dark hover:bg-igo-lime/10 transition-colors text-left"
-                        >
-                          <History className="w-4 h-4 text-igo-lime" />
-                          Order Status
-                        </button>
-
-                        <button
-                          onClick={() => { handleNav(Page.CustomerProfile, 'billing'); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-igo-dark hover:bg-igo-lime/10 transition-colors text-left"
-                        >
-                          <CreditCard className="w-4 h-4 text-igo-lime" />
-                          Billing
-                        </button>
-
-                        <button
-                          onClick={() => { handleNav(Page.CustomerProfile, 'settings'); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-igo-dark hover:bg-igo-lime/10 transition-colors text-left"
-                        >
-                          <Settings className="w-4 h-4 text-igo-lime" />
-                          Settings
-                        </button>
-
-                        <div className="border-t border-gray-50 my-2" />
-                        
-                        <button
-                          onClick={() => { onCustomerLogout(); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Logout
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <button
