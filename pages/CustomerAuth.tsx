@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, Mail, Lock, CheckCircle2, ChevronRight, ArrowLeft, Twitter, Facebook, Instagram, Youtube } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { User, Mail, Lock, CheckCircle2, ChevronRight, ArrowLeft, Twitter, Facebook, Instagram, Youtube, RefreshCw, AlertTriangle } from 'lucide-react';
 import { customerApi } from '../services/customerApi';
 
 interface CustomerAuthProps {
@@ -8,6 +8,26 @@ interface CustomerAuthProps {
 }
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset' | 'verify';
+
+// Map raw Supabase/API errors → friendly user messages
+const friendlyError = (msg: string, mode: AuthMode): string => {
+  const m = msg.toLowerCase();
+  if (m.includes('email rate limit') || m.includes('rate limit') || m.includes('too many'))
+    return 'Too many attempts. A verification code was already sent — please check your inbox (and spam folder), or wait a few minutes before trying again.';
+  if (m.includes('user already registered') || m.includes('already been registered'))
+    return 'An account with this email already exists. Please sign in instead.';
+  if (m.includes('invalid login credentials') || m.includes('invalid credentials'))
+    return 'Incorrect email or password. Please try again.';
+  if (m.includes('email not confirmed'))
+    return 'Your email is not yet verified. Please check your inbox for the OTP code.';
+  if (m.includes('password') && m.includes('least'))
+    return 'Password must be at least 6 characters long.';
+  if (m.includes('unable to validate') || m.includes('network') || m.includes('failed to fetch'))
+    return 'Connection issue. Please check your internet and try again.';
+  if (m.includes('otp') || m.includes('token') || m.includes('invalid') && m.includes('code'))
+    return 'The OTP code is incorrect or has expired. Please request a new one.';
+  return msg;
+};
 
 const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -24,6 +44,23 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startResendCooldown = (seconds = 60) => {
+    setResendCooldown(seconds);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current!);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   // Detect Reset Token
   React.useEffect(() => {
@@ -39,6 +76,7 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setRateLimited(false);
 
     try {
       const email = formData.email.trim();
@@ -54,22 +92,40 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
           onLogin(loginRes);
         }
       } else if (mode === 'signup') {
-        await customerApi.signup({ 
-          name: formData.name.trim(), 
-          email, 
-          password, 
-          phone: formData.phone.trim() 
-        });
-        
-        // Supabase ALWAYS sends a verification email/OTP by default
-        setMode('verify');
-        setSuccess('Signup initiated! Verification code sent to your email.');
-        setTimeout(() => setSuccess(null), 3000);
+        try {
+          await customerApi.signup({
+            name: formData.name.trim(),
+            email,
+            password,
+            phone: formData.phone.trim()
+          });
+          setMode('verify');
+          setSuccess('Account created! A 6-digit verification code has been sent to your email.');
+          setTimeout(() => setSuccess(null), 4000);
+          startResendCooldown(60);
+        } catch (signupErr: any) {
+          const raw: string = signupErr.message || '';
+          const isRateLimit = raw.toLowerCase().includes('rate limit') || raw.toLowerCase().includes('too many');
+          const isAlreadyExists = raw.toLowerCase().includes('already registered') || raw.toLowerCase().includes('already been registered');
+
+          if (isRateLimit) {
+            // Email was likely sent already — move them to verify screen
+            setRateLimited(true);
+            setMode('verify');
+            setError('A verification code was already sent to your email. Please enter it below. If you didn\'t receive it, wait 60 seconds then try again.');
+            startResendCooldown(60);
+          } else if (isAlreadyExists) {
+            setError('This email is already registered. Please sign in or reset your password.');
+          } else {
+            setError(friendlyError(raw, 'signup'));
+          }
+        }
       } else if (mode === 'verify') {
         const session = await customerApi.verifyOtp({ email, otp: formData.otp.trim() });
         if (session && session.token) {
-          setSuccess('Access verified! Entering your dashboard...');
-          setTimeout(() => onLogin(session), 1000);
+          setSuccess('✅ Email verified! Taking you to your dashboard...');
+          setRateLimited(false);
+          setTimeout(() => onLogin(session), 1200);
         } else {
           setSuccess('Account verified successfully!');
           setTimeout(() => {
@@ -93,7 +149,28 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
         }, 2000);
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      setError(friendlyError(err.message || 'Authentication failed', mode));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { supabase } = await import('../services/supabaseClient');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: formData.email.trim(),
+      });
+      if (error) throw new Error(error.message);
+      setSuccess('A new verification code has been sent to your email.');
+      setTimeout(() => setSuccess(null), 4000);
+      startResendCooldown(60);
+    } catch (err: any) {
+      setError(friendlyError(err.message || 'Could not resend code.', 'verify'));
     } finally {
       setIsLoading(false);
     }
@@ -214,7 +291,17 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
 
                 {mode === 'verify' && (
                   <div className="space-y-4">
-                    <label className="text-sm font-semibold text-white block">OTP Code</label>
+                    {rateLimited && (
+                      <div className="flex items-start gap-2 p-3 bg-yellow-500/20 border border-yellow-500/40 rounded-sm">
+                        <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-yellow-200 leading-relaxed">
+                          A code was already sent to <strong>{formData.email}</strong>. Check your inbox and spam folder. You can resend after the cooldown.
+                        </p>
+                      </div>
+                    )}
+                    <label className="text-sm font-semibold text-white block">
+                      Enter the 6-digit code sent to <span className="text-orange-400">{formData.email || 'your email'}</span>
+                    </label>
                     <input
                       type="text"
                       required
@@ -224,6 +311,15 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
                       value={formData.otp}
                       onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
                     />
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={resendCooldown > 0 || isLoading}
+                      className={`flex items-center gap-2 text-xs font-semibold transition-colors ${resendCooldown > 0 ? 'text-white/30 cursor-not-allowed' : 'text-orange-400 hover:text-orange-300 cursor-pointer'}`}
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend verification code'}
+                    </button>
                   </div>
                 )}
 
@@ -281,8 +377,9 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
               </div>
 
               {error && (
-                <div className="p-4 bg-red-500/20 text-red-200 rounded-sm text-xs font-bold text-center border border-red-500/30">
-                  {error}
+                <div className="flex items-start gap-3 p-4 bg-red-500/20 text-red-200 rounded-sm border border-red-500/30">
+                  <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs font-medium leading-relaxed">{error}</p>
                 </div>
               )}
 
@@ -318,9 +415,14 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
                   </p>
                 )}
                 {mode === 'signup' && (
-                  <p className="text-xs text-white/80">
-                    Already have an account? <button type="button" onClick={() => setMode('login')} className="text-orange-500 font-bold hover:underline">Sign In</button>
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-white/80">
+                      Already have an account? <button type="button" onClick={() => setMode('login')} className="text-orange-500 font-bold hover:underline">Sign In</button>
+                    </p>
+                    <p className="text-xs text-white/60">
+                      Already received a code? <button type="button" onClick={() => setMode('verify')} className="text-orange-400 font-bold hover:underline">Enter it here</button>
+                    </p>
+                  </div>
                 )}
               </div>
 

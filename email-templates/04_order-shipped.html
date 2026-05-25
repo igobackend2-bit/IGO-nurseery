@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Shipped – IGO Nursery</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #f4f7f4; font-family: 'Inter', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .header { background: linear-gradient(135deg, #2d7a2d 0%, #4caf50 100%); padding: 36px 40px; text-align: center; }
+    .header .logo { font-size: 28px; font-weight: 800; color: #ffffff; }
+    .header .tagline { font-size: 13px; color: #c8e6c9; margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
+    .header-banner { background: #1b5e20; padding: 24px 40px; text-align: center; }
+    .header-banner h1 { font-size: 26px; font-weight: 800; color: #ffffff; }
+    .header-banner p { font-size: 13px; color: #a5d6a7; margin-top: 6px; }
+    .body { padding: 36px 40px; }
+    .greeting { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
+    .sub-text { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 28px; }
+
+    .tracker { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; }
+    .step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .step-dot { width: 18px; height: 18px; border-radius: 50%; background: #4caf50; border: 3px solid #4caf50; }
+    .step-dot.inactive { background: #ddd; border-color: #ddd; }
+    .step-label { font-size: 11px; color: #4caf50; font-weight: 600; margin-top: 8px; text-align: center; }
+    .step-label.inactive { color: #bbb; }
+    .tracker-line { flex: 1; height: 3px; background: #4caf50; margin-top: -18px; }
+    .tracker-line.inactive { background: #e0e0e0; }
+
+    .info-box { background: #f0faf0; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; }
+    .info-row { display: flex; justify-content: space-between; font-size: 14px; padding: 7px 0; border-bottom: 1px solid #e0f2e0; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row span:first-child { color: #777; }
+    .info-row span:last-child { color: #1a1a1a; font-weight: 600; }
+
+    .section-title { font-size: 13px; font-weight: 700; color: #2d7a2d; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+    .product-item { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
+    .product-item:last-child { border-bottom: none; }
+    .product-img { width: 70px; height: 70px; border-radius: 10px; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 30px; flex-shrink: 0; }
+    .product-name { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+    .product-meta { font-size: 12px; color: #888; }
+    .product-price { font-size: 14px; font-weight: 700; color: #2d7a2d; }
+
+    .cta { text-align: center; margin: 36px 0 20px; }
+    .cta a { display: inline-block; background: #2d7a2d; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 14px 40px; border-radius: 50px; }
+    .footer { background: #f9fdf9; padding: 28px 40px; text-align: center; border-top: 1px solid #e8f5e9; }
+    .footer p { font-size: 12px; color: #aaa; line-height: 1.8; }
+    .footer a { color: #4caf50; text-decoration: none; }
+    .social a { display: inline-block; margin: 0 6px; font-size: 12px; color: #4caf50; text-decoration: none; border: 1px solid #c8e6c9; border-radius: 20px; padding: 4px 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">🌿 IGO NURSERY</div>
+      <div class="tagline">Grow with Nature</div>
+    </div>
+    <div class="header-banner">
+      <h1>🚚 Your Order is On Its Way!</h1>
+      <p>Happiness is coming your way</p>
+    </div>
+
+    <div class="body">
+      <p class="greeting">Hi {{Customer_Name}},</p>
+      <p class="sub-text">
+        Your order <strong>#{{Order_ID}}</strong> has been shipped and is now in transit with <strong>{{Courier_Partner}}</strong>. You can track your package anytime using the AWB number below. 🌱
+      </p>
+
+      <!-- Tracker: Confirmed + Packed + Shipped active -->
+      <div class="tracker">
+        <div class="step">
+          <div class="step-dot"></div>
+          <div class="step-label">Confirmed</div>
+        </div>
+        <div class="tracker-line"></div>
+        <div class="step">
+          <div class="step-dot"></div>
+          <div class="step-label">Packed</div>
+        </div>
+        <div class="tracker-line"></div>
+        <div class="step">
+          <div class="step-dot"></div>
+          <div class="step-label">Shipped</div>
+        </div>
+        <div class="tracker-line inactive"></div>
+        <div class="step">
+          <div class="step-dot inactive"></div>
+          <div class="step-label inactive">Delivered</div>
+        </div>
+      </div>
+
+      <p class="section-title">Shipment Details</p>
+      <div class="info-box">
+        <div class="info-row"><span>Order ID</span><span>#{{Order_ID}}</span></div>
+        <div class="info-row"><span>AWB / Tracking No.</span><span>{{AWB_Number}}</span></div>
+        <div class="info-row"><span>Courier Partner</span><span>{{Courier_Partner}}</span></div>
+        <div class="info-row"><span>Shipped On</span><span>{{Shipped_Date}}</span></div>
+        <div class="info-row"><span>Expected Delivery</span><span>{{Expected_Delivery_Date}}</span></div>
+        <div class="info-row"><span>Shipping To</span><span>{{Delivery_Address}}</span></div>
+      </div>
+
+      <p class="section-title">Items Shipped</p>
+      <div class="product-item">
+        <div class="product-img">🌿</div>
+        <div>
+          <div class="product-name">{{Product_Name_1}}</div>
+          <div class="product-meta">Qty: {{Qty_1}}</div>
+          <div class="product-price">Rs. {{Price_1}}</div>
+        </div>
+      </div>
+      <div class="product-item">
+        <div class="product-img">🌱</div>
+        <div>
+          <div class="product-name">{{Product_Name_2}}</div>
+          <div class="product-meta">Qty: {{Qty_2}}</div>
+          <div class="product-price">Rs. {{Price_2}}</div>
+        </div>
+      </div>
+
+      <div class="cta">
+        <a href="{{Track_Order_URL}}">TRACK YOUR ORDER →</a>
+      </div>
+      <p style="font-size:13px; color:#999; text-align:center;">
+        Need help? <a href="mailto:support@igonursery.com" style="color:#4caf50; text-decoration:none;">support@igonursery.com</a>
+      </p>
+    </div>
+
+    <div class="footer">
+      <div class="social">
+        <a href="#">Instagram</a>
+        <a href="#">Facebook</a>
+        <a href="#">WhatsApp</a>
+      </div>
+      <p style="margin-top:16px;">© 2026 IGO Nursery. All rights reserved.<br/>
+        <a href="#">Unsubscribe</a> · <a href="#">Privacy Policy</a></p>
+    </div>
+  </div>
+</body>
+</html>

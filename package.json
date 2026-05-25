@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.60.4",
     "@supabase/supabase-js": "^2.106.1",
     "lucide-react": "^0.562.0",
     "nodemailer": "^8.0.5",
@@ -18,12 +19,12 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "esbuild": "^0.19.6",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.1.2",
+    "esbuild": "^0.19.6",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

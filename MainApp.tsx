@@ -1100,16 +1100,4 @@ const MainApp: React.FC = () => {
           cartCount={cartCount}
           isAdmin={isAdmin}
           onAdminLogout={handleAdminLogout}
-          customer={customer}
-          onCustomerLogout={handleCustomerLogout}
-          notifications={notifications}
-        />
-      )}
-      {/* Structural Fix: flex-grow + min-h-0 ensures children calculate height correctly relative to the viewport shell */}
-      <main className={`flex-grow flex flex-col min-h-0 relative z-0 ${!hideChrome ? 'pt-24' : ''}`}>{renderPage()}</main>
-      {!hideChrome && <Footer setCurrentPage={handlePageChange} />}
-    </div>
-  );
-};
-
-export default MainApp;
+         
