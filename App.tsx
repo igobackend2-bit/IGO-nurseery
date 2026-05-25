@@ -111,6 +111,8 @@ const buildPath = (
       return '/admin-orders';
     case Page.AdminLeads:
       return '/admin-leads';
+    case Page.AdminProducts:
+      return '/admin-products';
     case Page.AdminInventory:
       return '/admin-inventory';
     case Page.AdminProfile:
