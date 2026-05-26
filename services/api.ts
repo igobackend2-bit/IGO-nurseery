@@ -317,7 +317,7 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
 
   // Push an in-app notification for the customer about their new order
   if (payload.customerId) {
-    await supabase.from('notifications').insert({
+    const { error: notifError } = await supabase.from('notifications').insert({
       customer_id: payload.customerId,
       title: `Order Confirmed: #${payload.orderNumber}`,
       message: `Your order has been placed successfully and is now being processed.`,
@@ -325,7 +325,8 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
       target_page: 'customer-profile',
       target_id: 'orders',
       is_read: false
-    }).catch(e => console.error('Failed to create order notification:', e));
+    });
+    if (notifError) console.error('Failed to create order notification:', notifError);
   }
 
   return { order: payload as any, accessKey: payload.accessKey };
