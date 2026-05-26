@@ -134,7 +134,21 @@ export const customerApi = {
       }
     }
 
-    return { message: 'OTP sent to your email.' };
+    // When "Confirm email" is OFF in Supabase, a session is returned immediately.
+    // Return it so the frontend can log the customer in without an OTP step.
+    if (authData.session) {
+      localStorage.setItem('igo_customer_token', authData.session.access_token);
+      const customer = authData.user ? {
+        id: authData.user.id,
+        email: authData.user.email || '',
+        name: authData.user.user_metadata?.name || data.name || '',
+        phone: authData.user.user_metadata?.phone || data.phone || ''
+      } : null;
+      return { token: authData.session.access_token, customer, requiresVerification: false };
+    }
+
+    // "Confirm email" is ON — customer needs to enter the OTP sent to their inbox.
+    return { message: 'OTP sent to your email.', requiresVerification: true };
   },
 
   async verifyOtp(data: { email: string; otp: string }) {
@@ -432,26 +446,4 @@ export const customerApi = {
       }
       return l;
     });
-    localStorage.setItem('igo_leads', JSON.stringify(updatedLeads));
-    return { success: true };
-  },
-
-  async submitLead(leadData: any) {
-    let existingLeads = [];
-    try {
-      existingLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-    } catch (e) {
-      existingLeads = [];
-    }
-    const newLead = {
-      ...leadData,
-      id: `lead-${Date.now()}`,
-      status: 'new',
-      createdAt: new Date().toISOString(),
-      chatHistory: leadData.message ? [{ sender: 'customer', message: leadData.message, timestamp: new Date().toISOString() }] : []
-    };
-    localStorage.setItem('igo_leads', JSON.stringify([newLead, ...existingLeads]));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'igo_leads' }));
-    return { success: true, lead: newLead };
-  }
-};
+    localStor

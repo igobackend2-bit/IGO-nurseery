@@ -93,16 +93,24 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
         }
       } else if (mode === 'signup') {
         try {
-          await customerApi.signup({
+          const signupRes = await customerApi.signup({
             name: formData.name.trim(),
             email,
             password,
             phone: formData.phone.trim()
           });
-          setMode('verify');
-          setSuccess('Account created! A 6-digit verification code has been sent to your email.');
-          setTimeout(() => setSuccess(null), 4000);
-          startResendCooldown(60);
+
+          // Confirm email is OFF — Supabase returned a session immediately, log in directly
+          if (signupRes.token && signupRes.customer) {
+            setSuccess('Account created! Taking you to your dashboard...');
+            setTimeout(() => onLogin(signupRes), 1200);
+          } else {
+            // Confirm email is ON — send customer to OTP verification screen
+            setMode('verify');
+            setSuccess('Account created! A 6-digit verification code has been sent to your email.');
+            setTimeout(() => setSuccess(null), 4000);
+            startResendCooldown(60);
+          }
         } catch (signupErr: any) {
           const raw: string = signupErr.message || '';
           const isRateLimit = raw.toLowerCase().includes('rate limit') || raw.toLowerCase().includes('too many');
@@ -428,16 +436,4 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
 
               <div className="pt-8 text-center border-t border-white/10">
                 <p className="text-[10px] text-white/40 leading-relaxed">
-                  By clicking on "Sign in now" you agree to<br />
-                  <a href="#" className="underline hover:text-white transition-colors">Terms of Service</a> | <a href="#" className="underline hover:text-white transition-colors">Privacy Policy</a>
-                </p>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default CustomerAuth;
+ 
