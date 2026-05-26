@@ -35,8 +35,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
   const [pendingStatuses, setPendingStatuses] = useState<Record<string, any>>({});
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState<'orders' | 'cx'>('orders');
-
-  const avgOrderValue = useMemo(() => orders.length > 0 ? orders.reduce((s, o) => s + o.total, 0) / orders.length : 0, [orders]);
+  const avgOrderValue = useMemo(() => orders.length > 0 ? orders.reduce((s, o) => s + (o.total || 0), 0) / orders.length : 0, [orders]);
 
   const filteredOrders = useMemo(() => {
     const cleanSearchTerm = searchTerm.trim().toLowerCase();
@@ -54,9 +53,13 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     });
 
     if (sortBy === 'amount-high') {
-      result = [...result].sort((a, b) => b.total - a.total);
+      result = [...result].sort((a, b) => (b.total || 0) - (a.total || 0));
     } else {
-      result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      result = [...result].sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+      });
     }
 
     return result;
@@ -68,8 +71,8 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
   const stats = useMemo(() => {
     return {
       totalOrders: orders.length,
-      totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
-      avgOrderValue: orders.length > 0 ? orders.reduce((sum, order) => sum + order.total, 0) / orders.length : 0,
+      totalRevenue: orders.reduce((sum, order) => sum + (order.total || 0), 0),
+      avgOrderValue: orders.length > 0 ? orders.reduce((sum, order) => sum + (order.total || 0), 0) / orders.length : 0,
       statuses: {
         pending: orders.filter(o => o.status === 'pending').length,
         processing: orders.filter(o => o.status === 'processing').length,
@@ -246,7 +249,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
                 <p className="text-sm font-black text-igo-dark uppercase tracking-widest">
                   {sortBy === 'amount-high' && 'Sorted by: Highest Revenue — '}
                   {sortBy === 'above-avg' && `Showing: Above Avg (≥${formatCurrency(avgOrderValue)}) — `}
-                  {statusFilter !== 'all' && <><span className="text-igo-lime">{statusFilter.toUpperCase()}</span>{' '}</>}
+                  {statusFilter !== 'all' && <React.Fragment><span className="text-igo-lime">{statusFilter.toUpperCase()}</span>{' '}</React.Fragment>}
                   <span className="text-gray-500 font-bold normal-case">({filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''})</span>
                 </p>
               </div>
