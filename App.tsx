@@ -34,6 +34,7 @@ import { INITIAL_STORE_PRODUCTS } from './data/storeProducts';
 import { KNOWLEDGE_ARTICLES } from './data/knowledgeArticles';
 import { sendOrderConfirmationEmail, sendAdminOrderNotification } from './services/orderEmailService';
 import LeadCapturePopup from './components/LeadCapturePopup';
+import ErrorBoundary from './components/ErrorBoundary';
 import { submitOrder, createOrderPayload, fetchAdminOrders, updateAdminOrderStatus } from './services/api';
 
 interface ParsedRoute {
