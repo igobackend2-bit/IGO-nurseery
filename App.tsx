@@ -33,6 +33,7 @@ import { INITIAL_STORE_PRODUCTS } from './data/storeProducts';
 import { KNOWLEDGE_ARTICLES } from './data/knowledgeArticles';
 import { sendOrderConfirmationEmail, sendAdminOrderNotification } from './services/orderEmailService';
 import LeadCapturePopup from './components/LeadCapturePopup';
+import { submitOrder, createOrderPayload } from './services/api';
 
 interface ParsedRoute {
   page: Page;
@@ -621,12 +622,13 @@ const App: React.FC = () => {
     };
     
     // 1. Save to Backend DB (Background)
-    const accessKey = Math.random().toString(36).substr(2, 12).toUpperCase();
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newOrder, accessKey }),
-    }).then(() => console.log('✅ Order saved to backend')).catch(e => console.error('⚠️ DB Error:', e));
+    const payload = createOrderPayload(orderData, cartItems, customer?.id);
+    
+    submitOrder(payload).then(response => {
+      console.log('✅ Order saved to Supabase directly');
+      // Set the order number from the actual payload for consistency
+      setCurrentOrder({ orderNumber: response.order.orderNumber, total });
+    }).catch(e => console.error('⚠️ DB Error:', e));
 
     // 1b. Deduct stock & trigger alarms
     const lowStockAlerts: any[] = [];

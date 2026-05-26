@@ -45,13 +45,12 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId }) => {
   const [pendingStatuses, setPendingStatuses] = useState<Record<string, Lead['status']>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const loadLeads = () => {
-    const storedLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-    setLeads(storedLeads);
+  const loadLeads = async () => {
+    const leadsData = await customerApi.getLeads();
+    setLeads(leadsData);
     
-    // Update selected lead if it's open to show new messages
     if (selectedLead) {
-      const updated = storedLeads.find((l: Lead) => l.id === selectedLead.id);
+      const updated = leadsData.find((l: Lead) => l.id === selectedLead.id);
       if (updated) setSelectedLead(updated);
     }
   };
@@ -78,14 +77,6 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId }) => {
 
   useEffect(() => {
     loadLeads();
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'igo_leads') {
-        loadLeads();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, [selectedLead]);
 
   useEffect(() => {

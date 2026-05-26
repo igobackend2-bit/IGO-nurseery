@@ -310,7 +310,7 @@ export const customerApi = {
       .from('orders')
       .select('*, order_items(*)')
       .eq('customer_id', user.id)
-      .order('order_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('getOrders Supabase error:', error.message);
@@ -373,77 +373,122 @@ export const customerApi = {
     return customerApi.submitLead(leadData);
   },
 
+  async getLeads() {
+    try {
+      const { supabase } = await import('./supabaseClient');
+      const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
+      if (error) throw new Error(error.message);
+      
+      return (data || []).map((l: any) => ({
+        id: l.id,
+        type: l.type,
+        customerName: l.customer_name,
+        customerEmail: l.customer_email,
+        customerPhone: l.customer_phone,
+        issue: l.issue,
+        reason: l.reason,
+        selectedPlan: l.selected_plan,
+        status: l.status,
+        adminDecision: l.admin_decision,
+        chatHistory: l.chat_history || [],
+        createdAt: l.created_at,
+        auditDate: l.audit_date
+      }));
+    } catch (e) {
+      console.error('getLeads failed:', e);
+      return [];
+    }
+  },
+
   async updateLead(leadId: string, updates: any) {
-    const existingLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-    const updatedLeads = existingLeads.map((l: any) => {
-      if (l.id === leadId) {
-        // Status Update Notifications
-        if (updates.status) {
-          const status = updates.status.toUpperCase();
-          const decision = updates.adminDecision || 'A decision has been made on your request.';
-          
-          // 1. Send Simulated Email
-          console.log(`%c[SIMULATED EMAIL] To: ${l.customerEmail} Subject: Your ${l.type} request status updated to ${status}`, 'color: blue; font-weight: bold;');
-          customerApi._dispatchEmail(
-             l.customerEmail, 
-             `Update on your ${l.type} request`, 
-             `Your request has been marked as ${status}. Decision: ${decision}`,
-             leadId
-          );
-          
-          // 2. Notify in Website Inbox
-          customerApi._pushNotification(
-            l.customerEmail, 
-            `Update on your ${l.type} request`, 
-            `Your request has been marked as ${status}: ${decision}`,
-            status === 'REJECTED' ? 'cancelled' : 'shipped',
-            'customer-profile',
-            l.id // targetId for deep-linking
-          );
-        }
-        return { ...l, ...updates };
+    try {
+      const { supabase } = await import('./supabaseClient');
+      
+      const updateData: any = {};
+      if (updates.status) updateData.status = updates.status;
+      if (updates.adminDecision) updateData.admin_decision = updates.adminDecision;
+      
+      // We still do the notifications since this affects the real customer
+      const { data: leadData } = await supabase.from('leads').select('*').eq('id', leadId).single();
+      
+      const { error } = await supabase.from('leads').update(updateData).eq('id', leadId);
+      if (error) throw new Error(error.message);
+
+      if (leadData && updates.status) {
+        const status = updates.status.toUpperCase();
+        const decision = updates.adminDecision || 'A decision has been made on your request.';
+        
+        customerApi._pushNotification(
+          leadData.customer_email, 
+          `Update on your ${leadData.type} request`, 
+          `Your request has been marked as ${status}: ${decision}`,
+          status === 'REJECTED' ? 'cancelled' : 'shipped',
+          'customer-profile',
+          leadId
+        );
       }
-      return l;
-    });
-    localStorage.setItem('igo_leads', JSON.stringify(updatedLeads));
-    return { success: true };
+      return { success: true };
+    } catch (e) {
+      console.error('updateLead failed:', e);
+      return { success: false };
+    }
   },
 
   async addMessageToLead(leadId: string, sender: 'admin' | 'customer', message: string) {
-    const existingLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-    const updatedLeads = existingLeads.map((l: any) => {
-      if (l.id === leadId) {
-        const chatHistory = l.chatHistory || [];
-        
-        if (sender === 'admin') {
-          // 1. Send Simulated Email
-          console.log(`%c[SIMULATED EMAIL] From: IGO Admin To: ${l.customerEmail} Message: ${message}`, 'color: #10B981; font-weight: bold;');
-          customerApi._dispatchEmail(
-            l.customerEmail,
-            `New message from IGO Admin (Ref: ${l.id})`,
-            message,
-            leadId
-          );
-          
-          // 2. Notify in Website Inbox
-          customerApi._pushNotification(
-             l.customerEmail, 
-             `New message from IGO Admin`, 
-             `Re: ${l.type} request - ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
-             'shipped',
-             'customer-profile',
-             l.id // targetId for deep-linking
-          );
-        } else {
-          console.log(`[SIMULATED EMAIL RECEIVED] From: ${l.customerEmail} To: IGO Admin Message: ${message}`);
-        }
-        
-        return { 
-          ...l, 
-          chatHistory: [...chatHistory, { sender, message, timestamp: new Date().toISOString() }],
-          status: sender === 'customer' ? 'new' : l.status 
-        };
+    try {
+      const { supabase } = await import('./supabaseClient');
+      const { data: lead } = await supabase.from('leads').select('*').eq('id', leadId).single();
+      if (!lead) return { success: false };
+
+      const chatHistory = lead.chat_history || [];
+      const newChat = [...chatHistory, { sender, message, timestamp: new Date().toISOString() }];
+      
+      const updateData: any = { chat_history: newChat };
+      if (sender === 'customer') updateData.status = 'new';
+      
+      const { error } = await supabase.from('leads').update(updateData).eq('id', leadId);
+      if (error) throw new Error(error.message);
+
+      if (sender === 'admin') {
+        customerApi._pushNotification(
+           lead.customer_email, 
+           `New message from IGO Admin`, 
+           `Re: ${lead.type} request - ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
+           'shipped',
+           'customer-profile',
+           leadId
+        );
       }
-      return l;
-    });
-    localStor
+      return { success: true };
+    } catch (e) {
+      console.error('addMessageToLead failed:', e);
+      return { success: false };
+    }
+  },
+
+  async submitLead(leadData: any) {
+    try {
+      const { supabase } = await import('./supabaseClient');
+      const chatHistory = leadData.message ? [{ sender: 'customer', message: leadData.message, timestamp: new Date().toISOString() }] : [];
+      
+      const { data, error } = await supabase.from('leads').insert({
+        type: leadData.type,
+        customer_name: leadData.customerName,
+        customer_email: leadData.customerEmail,
+        customer_phone: leadData.customerPhone,
+        issue: leadData.issue,
+        reason: leadData.reason,
+        selected_plan: leadData.selectedPlan,
+        chat_history: chatHistory,
+        status: 'new'
+      }).select().single();
+      
+      if (error) throw new Error(error.message);
+      
+      return { success: true, lead: { ...leadData, id: data.id } };
+    } catch (e) {
+      console.error('submitLead failed:', e);
+      return { success: false, error: e };
+    }
+  }
+};

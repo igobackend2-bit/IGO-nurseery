@@ -436,4 +436,16 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
 
               <div className="pt-8 text-center border-t border-white/10">
                 <p className="text-[10px] text-white/40 leading-relaxed">
- 
+                  By clicking on "Sign in now" you agree to<br />
+                  <a href="#" className="underline hover:text-white transition-colors">Terms of Service</a> | <a href="#" className="underline hover:text-white transition-colors">Privacy Policy</a>
+                </p>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CustomerAuth;
