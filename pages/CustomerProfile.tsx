@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Customer, Order, Notification, Lead } from '../types';
 import { customerApi } from '../services/customerApi';
-import { MessageSquare, Send, Inbox, ArrowLeft, Copy, ExternalLink, Wallet } from 'lucide-react';
+import { MessageSquare, Send, Inbox, ArrowLeft, Copy, ExternalLink, Wallet, Box } from 'lucide-react';
 
 type TabType = 'account' | 'orders' | 'billing' | 'settings' | 'inbox' | 'privacy' | 'tracker';
 
@@ -485,12 +485,15 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
                           </div>
 
                           {[
-                            { label: 'Confirmed', icon: CheckCircle2, status: 'pending', date: selectedOrder.createdAt },
-                            { label: 'Processing', icon: Clock, status: 'processing', date: selectedOrder.createdAt },
-                            { label: 'Shipped', icon: Truck, status: 'shipped', date: selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' ? 'Estimated' : null },
+                            { label: 'Confirmed', icon: CheckCircle2, status: 'confirmed', date: selectedOrder.createdAt },
+                            { label: 'Packed', icon: Box, status: 'packed', date: ['packed', 'shipped', 'delivered'].includes(selectedOrder.status) ? 'Completed' : null },
+                            { label: 'Shipped', icon: Truck, status: 'shipped', date: ['shipped', 'delivered'].includes(selectedOrder.status) ? 'Estimated' : null },
                             { label: 'Delivered', icon: Package, status: 'delivered', date: selectedOrder.status === 'delivered' ? selectedOrder.estimatedDelivery : null }
                           ].map((step, idx) => {
-                            const isDone = ['pending', 'processing', 'shipped', 'delivered'].indexOf(selectedOrder.status) >= ['pending', 'processing', 'shipped', 'delivered'].indexOf(step.status);
+                            const statusOrderArr = ['pending', 'processing', 'confirmed', 'picked', 'packed', 'shipped', 'delivered'];
+                            const currentIdx = statusOrderArr.indexOf(selectedOrder.status);
+                            const stepIdx = statusOrderArr.indexOf(step.status);
+                            const isDone = currentIdx >= stepIdx;
                             const isActive = selectedOrder.status === step.status;
                             return (
                               <div key={idx} className="relative z-10 flex flex-col items-center gap-4 group">
