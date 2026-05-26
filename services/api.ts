@@ -214,6 +214,19 @@ export const createOrderPayload = (orderData: OrderData, cartItems: CartItem[], 
 export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>) => {
   const { supabase } = await import('./supabaseClient');
 
+  // 1. If customerId is provided, ensure they exist in public.customers to prevent FK violation
+  if (payload.customerId) {
+    const { error: customerError } = await supabase.from('customers').upsert({
+      id: payload.customerId,
+      name: payload.customerName || 'Customer',
+      email: payload.customerEmail || '',
+      phone: payload.customerPhone || ''
+    }, { onConflict: 'id' });
+    if (customerError) {
+      console.warn('Could not upsert customer during checkout:', customerError.message);
+    }
+  }
+
   const orderDataToInsert = {
     order_number:     payload.orderNumber,
     tracking_number:  payload.trackingNumber,
