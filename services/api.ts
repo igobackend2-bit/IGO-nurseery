@@ -116,6 +116,18 @@ export const fetchAdminOrder = async (token: string, orderNumber: string) => {
   return { order: normalizeOrder(data) };
 };
 
+const getStatusMessage = (status: string, orderNumber: string): string => {
+  const msgs: Record<string, string> = {
+    confirmed: `Great news! Your order #${orderNumber} has been confirmed and we are preparing it for you! 🌱`,
+    picked:    `Our garden experts have carefully hand-picked the best plants for your order #${orderNumber}! 🪴`,
+    packed:    `Your order #${orderNumber} is packed securely and is waiting to be shipped! 📦`,
+    shipped:   `Your order #${orderNumber} is on the way! Track your delivery on your profile. 🚚`,
+    delivered: `Your order #${orderNumber} has been delivered. Happy gardening! 🎉`,
+    cancelled: `Your order #${orderNumber} has been cancelled. Contact us if you have any questions.`,
+  };
+  return msgs[status] ?? `Your order #${orderNumber} status has been updated to: ${status}.`;
+};
+
 export const updateAdminOrderStatus = async (token: string, orderNumber: string, status: Order['status']) => {
   const { supabase } = await import('./supabaseClient');
 
@@ -139,7 +151,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
   // 3. Send status-update email + push in-app notification via Supabase
   try {
     const customerEmail = orderData.customer_email ?? '';
-    const customerId = orderData.customer_id ?? null;
+    let customerId = orderData.customer_id ?? null;
     const orderNumber = orderData.order_number ?? '';
     const customerName = orderData.customer_name ?? 'Customer';
 
@@ -150,13 +162,28 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
         .catch(e => console.error('Email dispatch failed:', e));
     }
 
-    // Push in-app notification stored in Supabase (cross-browser, replaces localStorage)
+    // If customer_id is null on the order, look up by email from customers table
+    if (!customerId && customerEmail) {
+      const { supabase } = await import('./supabaseClient');
+      const { data: customerRow } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', customerEmail)
+        .maybeSingle();
+      if (customerRow?.id) {
+        customerId = customerRow.id;
+        // Also backfill the order row so future updates work immediately
+        await supabase.from('orders').update({ customer_id: customerId }).eq('order_number', orderNumber);
+      }
+    }
+
+    // Push in-app notification stored in Supabase (cross-browser)
     if (customerId) {
       const { supabase } = await import('./supabaseClient');
       await supabase.from('notifications').insert({
         customer_id: customerId,
-        title: `Order ${orderNumber} — ${status}`,
-        message: `Your order status has been updated to: ${status}.`,
+        title: `Order ${orderNumber} — ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        message: getStatusMessage(status, orderNumber),
         type: status === 'cancelled' ? 'cancelled' : 'order',
         target_page: 'customer-profile',
         target_id: orderNumber,

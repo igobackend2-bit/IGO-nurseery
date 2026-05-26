@@ -83,10 +83,19 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
     }
   }, [initialTab]);
 
+  // Auto-refresh notifications every 30s when inbox is open so status updates from admin appear live
+  React.useEffect(() => {
+    if (activeTab !== 'inbox' || !onRefreshNotifications) return;
+    const interval = setInterval(() => {
+      onRefreshNotifications();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [activeTab, onRefreshNotifications]);
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const currentOrders = useMemo(() => 
-    orders.filter(o => ['pending', 'processing', 'shipped'].includes(o.status)), 
+    orders.filter(o => ['pending', 'processing', 'confirmed', 'picked', 'packed', 'shipped'].includes(o.status)), 
     [orders]
   );
   
@@ -478,11 +487,20 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
                        <div className="relative flex flex-col md:flex-row justify-between items-center gap-8 md:gap-0">
                           {/* Progress Line */}
                           <div className="hidden md:block absolute top-5 left-1/2 -translate-x-1/2 w-[85%] h-1 bg-gray-200 z-0">
-                             <div 
-                               className="h-full bg-igo-lime transition-all duration-1000" 
-                               style={{ width: selectedOrder.status === 'delivered' ? '100%' : selectedOrder.status === 'shipped' ? '66%' : '33%' }} 
-                             />
-                          </div>
+                              <div 
+                                className="h-full bg-igo-lime transition-all duration-1000" 
+                                style={{ 
+                                  width: (() => {
+                                    const s = selectedOrder.status;
+                                    if (s === 'delivered') return '100%';
+                                    if (s === 'shipped') return '75%';
+                                    if (s === 'packed' || s === 'picked') return '50%';
+                                    if (s === 'confirmed') return '25%';
+                                    return '5%';
+                                  })()
+                                }} 
+                              />
+                           </div>
 
                           {[
                             { label: 'Confirmed', icon: CheckCircle2, status: 'confirmed', date: selectedOrder.createdAt },
