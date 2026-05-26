@@ -33,6 +33,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [pendingStatuses, setPendingStatuses] = useState<Record<string, any>>({});
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const [activeTab, setActiveTab] = useState<'orders' | 'cx'>('orders');
 
   const filteredOrders = useMemo(() => {
     const cleanSearchTerm = searchTerm.trim().toLowerCase();
@@ -185,23 +186,23 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
         <div className="max-w-7xl mx-auto px-4">
           {/* Stats */}
           <div className="grid md:grid-cols-5 gap-4 mb-12">
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div onClick={() => setStatusFilter('all')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-igo-lime/50">
               <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Total Orders</p>
               <p className="text-3xl font-black text-igo-dark">{stats.totalOrders}</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div onClick={() => setStatusFilter('all')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-green-300">
               <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Total Revenue</p>
               <p className="text-2xl font-black text-green-600">{formatCurrency(stats.totalRevenue)}</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div onClick={() => setStatusFilter('all')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-gray-300">
               <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Avg Order Value</p>
               <p className="text-2xl font-black text-igo-dark">{formatCurrency(stats.avgOrderValue)}</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div onClick={() => setStatusFilter('shipped')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-blue-300">
               <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">Shipped</p>
               <p className="text-3xl font-black text-blue-600">{stats.statuses.shipped}</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div onClick={() => setStatusFilter('delivered')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-green-300">
               <p className="text-[10px] font-black uppercase tracking-widest text-green-600 mb-2">Delivered</p>
               <p className="text-3xl font-black text-green-600">{stats.statuses.delivered}</p>
             </div>
@@ -242,7 +243,24 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-gray-100 p-6 mb-8 shadow-sm">
+          {/* Tab Toggle */}
+          <div className="flex gap-4 mb-8">
+            <button 
+              onClick={() => setActiveTab('orders')} 
+              className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeTab === 'orders' ? 'bg-igo-dark text-white shadow-xl' : 'bg-white text-gray-400 hover:bg-gray-50 hover:text-igo-dark border border-gray-100'}`}
+            >
+              All Orders
+            </button>
+            <button 
+              onClick={() => setActiveTab('cx')} 
+              className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeTab === 'cx' ? 'bg-igo-dark text-white shadow-xl' : 'bg-white text-gray-400 hover:bg-gray-50 hover:text-igo-dark border border-gray-100'}`}
+            >
+              All CX (Customers)
+            </button>
+          </div>
+
+          {activeTab === 'cx' && (
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 mb-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-igo-lime mb-2">
@@ -323,9 +341,11 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
               </div>
             )}
           </div>
+          )}
 
           {/* Orders Table */}
-          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+          {activeTab === 'orders' && (
+          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             {filteredOrders.length === 0 ? (
               <div className="p-12 text-center">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -474,6 +494,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
             Showing {filteredOrders.length} of {orders.length} orders
           </div>
         </div>
+        )}
       </section>
 
       {/* Order View Modal */}
