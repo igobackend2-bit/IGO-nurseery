@@ -109,10 +109,6 @@ const buildPath = (
       return '/customer-profile';
     case Page.AdminOverview:
       return '/admin-overview';
-    case Page.AdminOrders:
-      return '/admin-orders';
-    case Page.AdminLeads:
-      return '/admin-leads';
     case Page.AdminProducts:
       return '/admin-products';
     case Page.AdminInventory:
@@ -123,6 +119,8 @@ const buildPath = (
       return '/admin-notifications';
     case Page.MailHub:
       return '/mail-hub';
+    case Page.AdminCustomers:
+      return '/admin-customers';
     default:
       return '/';
   }
@@ -299,6 +297,7 @@ const parseLocationToRoute = (): ParsedRoute => {
     [Page.AdminProfile]: Page.AdminProfile,
     [Page.AdminNotifications]: Page.AdminNotifications,
     [Page.MailHub]: Page.MailHub,
+    [Page.AdminCustomers]: Page.AdminCustomers,
   };
 
   const matchedPage = staticRoutes[first];
@@ -897,6 +896,7 @@ const App: React.FC = () => {
           />
         );
       case Page.AdminOrders:
+      case Page.AdminCustomers:
       case Page.AdminLeads:
       case Page.AdminProducts:
       case Page.AdminInventory:
@@ -967,15 +967,17 @@ const App: React.FC = () => {
         };
 
         return (
-          <AdminLayout 
-            currentPage={currentPage} 
-            onNavigate={(page) => handlePageChange(page)}
-            onLogout={handleAdminLogout}
-            notifications={adminNotifications}
-            orders={orders}
-          >
-            {renderAdminContent()}
-          </AdminLayout>
+          <ErrorBoundary>
+            <AdminLayout 
+              currentPage={currentPage} 
+              onNavigate={(page) => handlePageChange(page)}
+              onLogout={handleAdminLogout}
+              notifications={adminNotifications}
+              orders={orders}
+            >
+              {renderAdminContent()}
+            </AdminLayout>
+          </ErrorBoundary>
         );
       case Page.AdminLogin:
         return (
