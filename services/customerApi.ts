@@ -107,21 +107,34 @@ export const customerApi = {
   },
 
   async signup(data: any) {
-    // Route through our custom backend to send OTP via Resend,
-    // bypassing Supabase's strictly rate-limited internal email service.
-    const res = await fetch(`${API_BASE}/auth/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        phone: data.phone,
-      }),
+    const { supabase } = await import('./supabaseClient');
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          name: data.name,
+          phone: data.phone
+        }
+      }
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Signup failed');
-    return { message: json.message || 'OTP sent to your email.' };
+
+    if (error) throw new Error(error.message);
+
+    // Upsert customer profile row so it exists for orders/notifications
+    if (authData.user) {
+      const { error: dbError } = await supabase.from('customers').upsert({
+        id: authData.user.id,
+        email: data.email,
+        name: data.name,
+        phone: data.phone
+      }, { onConflict: 'id' });
+      if (dbError && dbError.code !== '23505') {
+        console.error('Customer profile upsert failed:', dbError);
+      }
+    }
+
+    return { message: 'OTP sent to your email.' };
   },
 
   async verifyOtp(data: { email: string; otp: string }) {

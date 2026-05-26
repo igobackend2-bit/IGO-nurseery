@@ -160,13 +160,12 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/resend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email.trim(), name: formData.name.trim() }),
+      const { supabase } = await import('../services/supabaseClient');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: formData.email.trim(),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not resend code.');
+      if (error) throw new Error(error.message);
       setSuccess('A new verification code has been sent to your email.');
       setTimeout(() => setSuccess(null), 4000);
       startResendCooldown(60);
