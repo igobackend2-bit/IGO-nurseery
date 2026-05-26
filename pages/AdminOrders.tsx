@@ -123,27 +123,62 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
 
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4">
-          {/* Stats */}
+          {/* Stats — click any card to filter the table below */}
           <div className="grid md:grid-cols-5 gap-4 mb-12">
-            <div onClick={() => setStatusFilter('all')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-igo-lime/50">
-              <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Total Orders</p>
+            {/* Total Orders */}
+            <div
+              onClick={() => { setStatusFilter('all'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
+                statusFilter === 'all' ? 'border-igo-lime shadow-igo-lime/20 scale-[1.02]' : 'border-gray-100 hover:border-igo-lime/50'
+              }`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2 group-hover:text-igo-dark transition-colors">Total Orders</p>
               <p className="text-3xl font-black text-igo-dark">{stats.totalOrders}</p>
+              {statusFilter === 'all' && <p className="text-[8px] font-black text-igo-lime uppercase tracking-widest mt-2">● Viewing All</p>}
             </div>
-            <div onClick={() => setStatusFilter('all')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-green-300">
+
+            {/* Total Revenue */}
+            <div
+              onClick={() => { setStatusFilter('all'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
+                statusFilter === 'all' ? 'border-green-300 shadow-green-100' : 'border-gray-100 hover:border-green-200'
+              }`}
+            >
               <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Total Revenue</p>
               <p className="text-2xl font-black text-green-600">{formatCurrency(stats.totalRevenue)}</p>
             </div>
-            <div onClick={() => setStatusFilter('all')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-gray-300">
+
+            {/* Avg Order Value */}
+            <div
+              onClick={() => { setStatusFilter('all'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-gray-300 transition-all duration-200 group"
+            >
               <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Avg Order Value</p>
               <p className="text-2xl font-black text-igo-dark">{formatCurrency(stats.avgOrderValue)}</p>
             </div>
-            <div onClick={() => setStatusFilter('shipped')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-blue-300">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">Shipped</p>
+
+            {/* Shipped */}
+            <div
+              onClick={() => { setStatusFilter('shipped'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
+                statusFilter === 'shipped' ? 'border-blue-400 shadow-blue-100 scale-[1.02]' : 'border-gray-100 hover:border-blue-300'
+              }`}
+            >
+              <p className={`text-[10px] font-black uppercase tracking-widest mb-2 transition-colors ${statusFilter === 'shipped' ? 'text-blue-700' : 'text-blue-500'}`}>Shipped</p>
               <p className="text-3xl font-black text-blue-600">{stats.statuses.shipped}</p>
+              {statusFilter === 'shipped' && <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mt-2">● Filtered</p>}
             </div>
-            <div onClick={() => setStatusFilter('delivered')} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow hover:border-green-300">
-              <p className="text-[10px] font-black uppercase tracking-widest text-green-600 mb-2">Delivered</p>
+
+            {/* Delivered */}
+            <div
+              onClick={() => { setStatusFilter('delivered'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
+                statusFilter === 'delivered' ? 'border-green-400 shadow-green-100 scale-[1.02]' : 'border-gray-100 hover:border-green-300'
+              }`}
+            >
+              <p className={`text-[10px] font-black uppercase tracking-widest mb-2 transition-colors ${statusFilter === 'delivered' ? 'text-green-700' : 'text-green-500'}`}>Delivered</p>
               <p className="text-3xl font-black text-green-600">{stats.statuses.delivered}</p>
+              {statusFilter === 'delivered' && <p className="text-[8px] font-black text-green-500 uppercase tracking-widest mt-2">● Filtered</p>}
             </div>
           </div>
 
@@ -182,13 +217,43 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
             </div>
           </div>
 
+          {/* Active Filter Banner */}
+          {statusFilter !== 'all' && (
+            <div id="orders-table" className="flex items-center justify-between bg-igo-lime/10 border border-igo-lime/30 rounded-2xl px-6 py-3 mb-4 animate-in fade-in duration-300">
+              <div className="flex items-center gap-3">
+                <span className="w-2 h-2 rounded-full bg-igo-lime animate-pulse" />
+                <p className="text-sm font-black text-igo-dark uppercase tracking-widest">
+                  Showing: <span className="text-igo-lime">{statusFilter.toUpperCase()}</span> orders ({filteredOrders.length} result{filteredOrders.length !== 1 ? 's' : ''})
+                </p>
+              </div>
+              <button
+                onClick={() => setStatusFilter('all')}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-igo-muted hover:text-red-500 transition-colors"
+              >
+                <X className="w-3 h-3" /> Clear Filter
+              </button>
+            </div>
+          )}
+
           {/* Orders Table */}
-          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div id={statusFilter === 'all' ? 'orders-table' : ''} className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             {filteredOrders.length === 0 ? (
               <div className="p-12 text-center">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-2xl font-black text-igo-dark mb-2">No Orders Found</h3>
-                <p className="text-igo-muted">Try adjusting your search or filters</p>
+                {statusFilter !== 'all' ? (
+                  <div className="space-y-3">
+                    <p className="text-igo-muted">There are no <span className="font-black text-igo-dark">{statusFilter}</span> orders yet.</p>
+                    <button
+                      onClick={() => setStatusFilter('all')}
+                      className="inline-flex items-center gap-2 px-6 py-2 bg-igo-lime text-igo-dark rounded-xl font-black text-xs uppercase tracking-widest hover:bg-igo-dark hover:text-white transition-all"
+                    >
+                      <X className="w-3 h-3" /> Show All Orders
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-igo-muted">Try adjusting your search or filters</p>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
