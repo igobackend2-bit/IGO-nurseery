@@ -703,9 +703,9 @@ const App: React.FC = () => {
     }
     
     navigateTo(buildPath(Page.OrderConfirmation));
-    } catch (e) {
+    } catch (e: any) {
       console.error('⚠️ DB Error:', e);
-      alert('Failed to place order. Please try again.');
+      alert('Failed to place order: ' + (e?.message || JSON.stringify(e)));
     }
   };
 

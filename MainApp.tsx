@@ -790,9 +790,9 @@ const MainApp: React.FC = () => {
       });
 
       navigateTo(Page.OrderConfirmation, localOrder.orderNumber);
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Error preparing order:', err);
-      alert('There was a problem preparing your order. Please try again.');
+      alert('There was a problem preparing your order: ' + (err?.message || JSON.stringify(err)));
     }
   };
 

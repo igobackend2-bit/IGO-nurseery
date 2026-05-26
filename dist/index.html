@@ -157,12 +157,28 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/assets/index-DkA-DGs0.js"></script>
+  <script type="module" crossorigin src="/assets/index-C3EyXqX4.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-CD_85tkk.css">
 </head>
 
 <body class="bg-white text-igo-dark">
-  <div id="root"></div>
-</body>
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        fetch('http://localhost:4000/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: message, stack: error ? error.stack : '' })
+        }).catch(() => console.error(message));
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        fetch('http://localhost:4000/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: event.reason ? event.reason.message : 'Unhandled Rejection', stack: event.reason ? event.reason.stack : '' })
+        }).catch(() => console.error(event.reason));
+      });
+    </script>
+    <div id="root"></div>
+  </body>
 
 </html>
