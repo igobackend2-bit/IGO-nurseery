@@ -343,8 +343,8 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
           </div>
           )}
 
-          {/* Orders Table */}
           {activeTab === 'orders' && (
+          <>
           <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             {filteredOrders.length === 0 ? (
               <div className="p-12 text-center">
@@ -493,8 +493,9 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
           <div className="mt-6 text-center text-sm text-igo-muted font-medium">
             Showing {filteredOrders.length} of {orders.length} orders
           </div>
+          </>
+          )}
         </div>
-        )}
       </section>
 
       {/* Order View Modal */}
