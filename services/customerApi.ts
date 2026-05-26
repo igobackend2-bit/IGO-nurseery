@@ -229,11 +229,18 @@ export const customerApi = {
     // Update customers table
     const { data, error } = await supabase.from('customers').update({
       name: settings.name,
-      phone: settings.phone
+      phone: settings.phone,
+      email_notifications: settings.emailNotifications
     }).eq('id', user.id).select().single();
     
     if (error) throw new Error(error.message);
-    return { customer: data };
+    
+    return { 
+      customer: {
+        ...data,
+        emailNotifications: data.email_notifications
+      }
+    };
   },
 
   async changePassword(data: any): Promise<{ success: boolean }> {
@@ -273,11 +280,22 @@ export const customerApi = {
     if (!user) return { customer: null };
     
     const { data } = await supabase.from('customers').select('*').eq('id', user.id).single();
-    const customer = data || {
+    
+    if (data) {
+      return { 
+        customer: {
+          ...data,
+          emailNotifications: data.email_notifications !== false
+        } 
+      };
+    }
+
+    const customer = {
       id: user.id,
       email: user.email || '',
       name: user.user_metadata?.name || '',
-      phone: user.user_metadata?.phone || ''
+      phone: user.user_metadata?.phone || '',
+      emailNotifications: true
     };
     return { customer };
   },

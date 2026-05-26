@@ -154,27 +154,37 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     let customerId = orderData.customer_id ?? null;
     const orderNumber = orderData.order_number ?? '';
     const customerName = orderData.customer_name ?? 'Customer';
+    let emailNotificationsEnabled = true;
 
+    // We must look up the customer to get their email_notifications preference
+    // and also to ensure we have their customerId for the in-app notification
     if (customerEmail) {
+      const { supabase } = await import('./supabaseClient');
+      const { data: customerRow } = await supabase
+        .from('customers')
+        .select('id, email_notifications')
+        .eq('email', customerEmail)
+        .maybeSingle();
+
+      if (customerRow) {
+        if (!customerId && customerRow.id) {
+           customerId = customerRow.id;
+           // Backfill the order row so future updates work immediately
+           await supabase.from('orders').update({ customer_id: customerId }).eq('order_number', orderNumber);
+        }
+        if (customerRow.email_notifications === false) {
+           emailNotificationsEnabled = false;
+        }
+      }
+    }
+
+    if (customerEmail && emailNotificationsEnabled) {
       const { sendOrderStatusUpdateEmail } = await import('./orderEmailService');
       sendOrderStatusUpdateEmail(customerEmail, customerName, orderNumber, status)
         .then(r => { if (r.success) console.log(`✅ Status email sent to ${customerEmail}`); })
         .catch(e => console.error('Email dispatch failed:', e));
-    }
-
-    // If customer_id is null on the order, look up by email from customers table
-    if (!customerId && customerEmail) {
-      const { supabase } = await import('./supabaseClient');
-      const { data: customerRow } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', customerEmail)
-        .maybeSingle();
-      if (customerRow?.id) {
-        customerId = customerRow.id;
-        // Also backfill the order row so future updates work immediately
-        await supabase.from('orders').update({ customer_id: customerId }).eq('order_number', orderNumber);
-      }
+    } else if (customerEmail && !emailNotificationsEnabled) {
+      console.log(`🚫 Email skipped for ${customerEmail} because they turned off notifications.`);
     }
 
     // Push in-app notification stored in Supabase (cross-browser)

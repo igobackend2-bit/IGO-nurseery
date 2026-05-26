@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Search, Filter, CheckCircle, Package, Clock, Mail, Eye, Trash2, AlertCircle, X } from 'lucide-react';
+import { ArrowLeft, Search, Filter, CheckCircle, Package, Clock, Mail, Eye, Trash2, AlertCircle, X, FileSpreadsheet, FileText } from 'lucide-react';
 import { Order, Page } from '../types';
 import { sendOrderConfirmationEmail } from '../services/orderEmailService';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AdminOrdersProps {
   orders: Order[];
@@ -134,6 +137,67 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                <Package className="w-3 h-3 text-igo-lime" /> Real-time Logistics & Order Fulfilment
             </p>
+         </div>
+         <div className="flex items-center gap-3">
+           <button
+             onClick={() => {
+               const dataToExport = filteredOrders.map(o => ({
+                 'Order ID': o.orderNumber,
+                 'Date': new Date(o.createdAt).toLocaleDateString(),
+                 'Month': new Date(o.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' }),
+                 'Customer Name': o.customerName,
+                 'Email': o.customerEmail,
+                 'Phone': o.customerPhone,
+                 'Total (INR)': o.total,
+                 'Status': o.status,
+                 'Payment Method': o.paymentMethod,
+                 'Items Count': o.items.reduce((sum, i) => sum + i.quantity, 0),
+               }));
+               const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+               const workbook = XLSX.utils.book_new();
+               XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
+               XLSX.writeFile(workbook, `IGO_Nursery_Orders_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+             }}
+             className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-green-50 transition-all"
+           >
+             <FileSpreadsheet className="w-4 h-4" /> Export Excel
+           </button>
+           <button
+             onClick={() => {
+               const doc = new jsPDF();
+               doc.setFont('helvetica', 'bold');
+               doc.setFontSize(20);
+               doc.text('IGO Nursery - Orders Report', 14, 22);
+               
+               doc.setFontSize(10);
+               doc.setFont('helvetica', 'normal');
+               doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+               doc.text(`Total Orders: ${filteredOrders.length}`, 14, 35);
+
+               const tableColumn = ["Order ID", "Date", "Customer", "Amount", "Status"];
+               const tableRows = filteredOrders.map(o => [
+                 o.orderNumber,
+                 new Date(o.createdAt).toLocaleDateString(),
+                 o.customerName,
+                 `Rs. ${o.total.toLocaleString('en-IN')}`,
+                 o.status.toUpperCase()
+               ]);
+
+               autoTable(doc, {
+                 head: [tableColumn],
+                 body: tableRows,
+                 startY: 40,
+                 theme: 'grid',
+                 styles: { fontSize: 8, cellPadding: 3 },
+                 headStyles: { fillColor: [132, 204, 22], textColor: [255, 255, 255], fontStyle: 'bold' }
+               });
+
+               doc.save(`IGO_Nursery_Orders_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+             }}
+             className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-red-500 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-red-50 transition-all"
+           >
+             <FileText className="w-4 h-4" /> Export PDF
+           </button>
          </div>
       </div>
 
