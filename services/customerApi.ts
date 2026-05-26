@@ -81,24 +81,26 @@ export const customerApi = {
     }
   },
 
-  // Helper to add a notification to local storage (simulated backend)
-  _pushNotification(customerEmail: string, title: string, message: string, type: string = 'shipped', targetPage?: string, targetId?: string) {
+  // Push a notification into Supabase so the customer receives it on any device/browser
+  async _pushNotification(customerIdentifier: string, title: string, message: string, type: string = 'shipped', targetPage?: string, targetId?: string) {
     try {
-      const existing = JSON.parse(localStorage.getItem('igo_notifications') || '[]');
-      const newNotif = {
-        id: Date.now(),
+      const { supabase } = await import('./supabaseClient');
+      let customerId = customerIdentifier;
+      // If the identifier looks like an email, resolve to the customer UUID first
+      if (customerIdentifier.includes('@')) {
+        const { data } = await supabase.from('customers').select('id').eq('email', customerIdentifier).single();
+        if (!data?.id) { console.warn('No customer found for email:', customerIdentifier); return; }
+        customerId = data.id;
+      }
+      const { error } = await supabase.from('notifications').insert({
+        customer_id: customerId,
         title,
         message,
         type,
-        targetPage,
-        targetId,
-        createdAt: new Date().toISOString(),
-        isRead: false,
-        customerEmail // To filter by customer
-      };
-      localStorage.setItem('igo_notifications', JSON.stringify([newNotif, ...existing]));
-      // Dispatch event so other components (like SiteHeader) can update
-      window.dispatchEvent(new StorageEvent('storage', { key: 'igo_notifications' }));
+        target_page: targetPage || null,
+        target_id: targetId || null,
+      });
+      if (error) console.error('Failed to push notification:', error.message);
     } catch (e) {
       console.error('Failed to push notification:', e);
     }
@@ -308,58 +310,42 @@ export const customerApi = {
   },
 
   async getNotifications(email?: string): Promise<{ notifications: Notification[] }> {
-    const userEmail = email;
-    
-    let allFetched: Notification[] = [];
-
-    // 1. Try to fetch from Real API
     try {
-      const res = await fetch(`${API_BASE}/customer/notifications`, {
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        allFetched = data.notifications || [];
-      }
+      const { supabase } = await import('./supabaseClient');
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) { console.error('getNotifications error:', error.message); return { notifications: [] }; }
+      return {
+        notifications: (data ?? []).map((n: any) => ({
+          id: n.id,
+          customerId: n.customer_id,
+          orderNumber: n.target_id || '',
+          title: n.title,
+          message: n.message,
+          type: n.type,
+          isRead: n.is_read,
+          createdAt: n.created_at,
+          targetPage: n.target_page,
+          targetId: n.target_id,
+          customerEmail: email,
+        }))
+      };
     } catch (e) {
-      console.warn('Real API notifications fetch failed, using fallback.');
-    }
-
-    // 2. Merge with Simulated Storage
-    try {
-      const localNotifs = JSON.parse(localStorage.getItem('igo_notifications') || '[]');
-      const filteredLocal = userEmail ? localNotifs.filter((n: any) => n.customerEmail === userEmail) : [];
-      
-      // Merge unique by ID (preferring API data if IDs overlap, though they shouldn't)
-      const merged = [...allFetched];
-      filteredLocal.forEach((ln: any) => {
-        if (!merged.find(mn => mn.id === ln.id)) {
-          merged.push(ln);
-        }
-      });
-
-      // Sort by date descending
-      merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      return { notifications: merged };
-    } catch (e) {
-      return { notifications: allFetched };
+      console.error('getNotifications failed:', e);
+      return { notifications: [] };
     }
   },
 
   async markNotificationRead(id: number) {
-    // Update local storage
-    const allNotifs = JSON.parse(localStorage.getItem('igo_notifications') || '[]');
-    const updated = allNotifs.map((n: any) => n.id === id ? { ...n, isRead: true } : n);
-    localStorage.setItem('igo_notifications', JSON.stringify(updated));
-    // Dispatch event so other components (like SiteHeader) can update instantly
-    window.dispatchEvent(new StorageEvent('storage', { key: 'igo_notifications' }));
-
-    // Also call API
-    await fetch(`${API_BASE}/customer/notifications/${id}/read`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
+    try {
+      const { supabase } = await import('./supabaseClient');
+      const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+      if (error) console.error('markNotificationRead error:', error.message);
+    } catch (e) {
+      console.error('markNotificationRead failed:', e);
+    }
   },
 
   async requestDeletion(customer: Customer, reason: string) {

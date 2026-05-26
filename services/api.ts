@@ -100,7 +100,7 @@ export const fetchAdminOrders = async (token: string) => {
   const { data, error } = await supabase
     .from('orders')
     .select('*, order_items(*)')
-    .order('order_date', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return { orders: (data ?? []).map(normalizeOrder) };
 };
@@ -136,36 +136,41 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     .single();
   if (error) throw new Error(error.message);
 
-  // 3. Send status-update email using customer_email stored on the order row
+  // 3. Send status-update email + push in-app notification via Supabase
   try {
     const customerEmail = orderData.customer_email ?? '';
+    const customerId = orderData.customer_id ?? null;
+    const orderNumber = orderData.order_number ?? '';
+    const customerName = orderData.customer_name ?? 'Customer';
+
     if (customerEmail) {
-      await fetch('/mailer.php', {
+      // Send email via Vercel serverless function (replaces non-executable mailer.php)
+      fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          secret: 'igo_nursery_secret_key_2026',
-          type: 'status_update',
           to: customerEmail,
-          order: {
-            orderNumber: orderData.order_number,
-            customerName: orderData.customer_name ?? 'Customer',
-            status,
-            items: (orderData.order_items ?? []).map((i: any) => ({
-              name: i.product_name ?? 'Product',
-              quantity: i.quantity,
-              price: i.price,
-            })),
-            subtotal: orderData.subtotal,
-            deliveryCharge: orderData.delivery_charge,
-            total: orderData.total,
-            estimatedDelivery: orderData.estimated_delivery,
-          },
+          subject: `Your IGO Nursery Order ${orderNumber} — Status: ${status}`,
+          text: `Dear ${customerName},\n\nYour order ${orderNumber} has been updated to: ${status}.\n\nThank you for choosing IGO Nursery Agritech Farms.`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:8px"><h2 style="color:#1F3864">IGO Nursery Order Update</h2><p>Dear <strong>${customerName}</strong>,</p><p>Your order <strong>${orderNumber}</strong> status has been updated to: <strong style="color:#2E5090">${status}</strong>.</p><p>Thank you for choosing IGO Nursery Agritech Farms.</p><hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"><p style="font-size:12px;color:#718096">IGO Nursery &bull; igonursery.com</p></div>`,
         }),
-      });
+      }).catch(e => console.error('Email dispatch failed:', e));
+    }
+
+    // Push in-app notification stored in Supabase (cross-browser, replaces localStorage)
+    if (customerId) {
+      const { supabase } = await import('./supabaseClient');
+      await supabase.from('notifications').insert({
+        customer_id: customerId,
+        title: `Order ${orderNumber} — ${status}`,
+        message: `Your order status has been updated to: ${status}.`,
+        type: status === 'cancelled' ? 'cancelled' : 'shipped',
+        target_page: 'customer-profile',
+        target_id: orderNumber,
+      }).then(({ error }) => { if (error) console.error('Notification insert failed:', error.message); });
     }
   } catch (e) {
-    console.error('Failed to send status email:', e);
+    console.error('Failed to send status update:', e);
   }
 
   return { order: normalizeOrder(data) };
@@ -272,7 +277,7 @@ export const fetchCustomerOrders = async (references: CustomerOrderReference[]) 
     .from('orders')
     .select('*, order_items(*)')
     .in('order_number', orderNumbers)
-    .order('order_date', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
   return { orders: (data ?? []).map(normalizeOrder) };

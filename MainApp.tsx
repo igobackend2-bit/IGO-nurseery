@@ -382,8 +382,8 @@ const MainApp: React.FC = () => {
   const loadCustomerData = async () => {
     // Independent fetching to ensure one failure doesn't block notifications
     try {
-      customerApi.getOrders()
-        .then(res => setCustomerOrders(res.orders))
+      await customerApi.getOrders()
+        .then(res => { if (res.orders.length > 0) setCustomerOrders(res.orders); })
         .catch(err => console.error('Orders load failed:', err));
 
       customerApi.getNotifications(customer?.email)
@@ -1100,4 +1100,16 @@ const MainApp: React.FC = () => {
           cartCount={cartCount}
           isAdmin={isAdmin}
           onAdminLogout={handleAdminLogout}
-         
+          customer={customer}
+          onCustomerLogout={handleCustomerLogout}
+          notifications={notifications}
+        />
+      )}
+      {/* Structural Fix: flex-grow + min-h-0 ensures children calculate height correctly relative to the viewport shell */}
+      <main className={`flex-grow flex flex-col min-h-0 relative z-0 ${!hideChrome ? 'pt-24' : ''}`}>{renderPage()}</main>
+      {!hideChrome && <Footer setCurrentPage={handlePageChange} />}
+    </div>
+  );
+};
+
+export default MainApp;
