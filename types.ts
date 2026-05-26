@@ -24,6 +24,7 @@ export enum Page {
   AdminLeads = 'admin-leads',
   AdminProducts = 'admin-products',
   AdminOverview = 'admin-overview',
+  AdminCustomers = 'admin-customers',
   CustomerAuth = 'customer-auth',
   CustomerProfile = 'customer-profile',
   AdminProfile = 'admin-profile',

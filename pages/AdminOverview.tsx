@@ -61,35 +61,71 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => 
     { label: 'Live Inventory', value: liveInventoryCount.toString(), trend: '+5.1%', icon: Package, color: 'text-indigo-600', bg: 'bg-indigo-50', page: Page.AdminInventory },
   ];
 
-  // Chart Data Calculation (Last 12 Months)
-  const last12Months = Array.from({length: 12}).map((_, i) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() - (11 - i));
-      return d;
-  });
+  const [timeframe, setTimeframe] = useState<'monthly' | 'daily'>('monthly');
 
-  const chartData = last12Months.map(date => {
-      const month = date.getMonth();
-      const year = date.getFullYear();
-      
-      const monthOrders = orders.filter(o => {
-          const oDate = new Date(o.createdAt);
-          return oDate.getMonth() === month && oDate.getFullYear() === year;
-      }).length;
+  // Chart Data Calculation
+  const chartData = useMemo(() => {
+    if (timeframe === 'monthly') {
+      const last12Months = Array.from({length: 12}).map((_, i) => {
+          const d = new Date();
+          d.setMonth(d.getMonth() - (11 - i));
+          return d;
+      });
 
-      const monthLeads = leads.filter(l => {
-          const lDate = new Date(l.createdAt || Date.now());
-          return lDate.getMonth() === month && lDate.getFullYear() === year;
-      }).length;
+      return last12Months.map(date => {
+          const month = date.getMonth();
+          const year = date.getFullYear();
+          
+          const monthOrders = orders.filter(o => {
+              const oDate = new Date(o.createdAt);
+              return oDate.getMonth() === month && oDate.getFullYear() === year;
+          }).length;
 
-      const total = monthOrders + monthLeads;
-      return {
-          monthLabel: date.toLocaleDateString('default', { month: 'short' }),
-          orders: monthOrders,
-          leads: monthLeads,
-          total
-      };
-  });
+          const monthLeads = leads.filter(l => {
+              const lDate = new Date(l.createdAt || Date.now());
+              return lDate.getMonth() === month && lDate.getFullYear() === year;
+          }).length;
+
+          const total = monthOrders + monthLeads;
+          return {
+              label: date.toLocaleDateString('default', { month: 'short' }),
+              orders: monthOrders,
+              leads: monthLeads,
+              total
+          };
+      });
+    } else {
+      const last30Days = Array.from({length: 30}).map((_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (29 - i));
+          return d;
+      });
+
+      return last30Days.map(date => {
+          const day = date.getDate();
+          const month = date.getMonth();
+          const year = date.getFullYear();
+          
+          const dayOrders = orders.filter(o => {
+              const oDate = new Date(o.createdAt);
+              return oDate.getDate() === day && oDate.getMonth() === month && oDate.getFullYear() === year;
+          }).length;
+
+          const dayLeads = leads.filter(l => {
+              const lDate = new Date(l.createdAt || Date.now());
+              return lDate.getDate() === day && lDate.getMonth() === month && lDate.getFullYear() === year;
+          }).length;
+
+          const total = dayOrders + dayLeads;
+          return {
+              label: date.toLocaleDateString('default', { month: 'short', day: 'numeric' }),
+              orders: dayOrders,
+              leads: dayLeads,
+              total
+          };
+      });
+    }
+  }, [orders, leads, timeframe]);
 
   const maxTotal = Math.max(...chartData.map(d => d.total), 1);
 
@@ -139,9 +175,20 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => 
                   <h3 className="text-xl font-black text-igo-dark uppercase tracking-tighter">Growth Velocity</h3>
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Inquiry vs Order Volume Analytics</p>
                </div>
-               <button className="p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                  <ArrowUpRight className="w-5 h-5 text-igo-dark" />
-               </button>
+               <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                  <button 
+                    onClick={() => setTimeframe('monthly')}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === 'monthly' ? 'bg-igo-dark text-white shadow-md' : 'text-gray-400 hover:text-igo-dark'}`}
+                  >
+                    Monthly
+                  </button>
+                  <button 
+                    onClick={() => setTimeframe('daily')}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === 'daily' ? 'bg-igo-dark text-white shadow-md' : 'text-gray-400 hover:text-igo-dark'}`}
+                  >
+                    Per Day
+                  </button>
+               </div>
             </div>
             
             {/* Real Chart Visual */}
@@ -170,15 +217,15 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => 
                         )}
                      </div>
                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 bg-igo-dark text-white px-3 py-2 rounded-xl text-[10px] font-bold shadow-xl pointer-events-none">
-                        <span className="text-igo-lime block mb-1">{data.monthLabel}</span>
+                        <span className="text-igo-lime block mb-1">{data.label}</span>
                         {data.orders} Orders • {data.leads} Inquiries
                      </div>
                   </div>
                )})}
             </div>
             <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4">
-               <span>12 Months Ago</span>
-               <span>Current Month</span>
+               <span>{timeframe === 'monthly' ? '12 Months Ago' : '30 Days Ago'}</span>
+               <span>{timeframe === 'monthly' ? 'Current Month' : 'Today'}</span>
             </div>
          </div>
 

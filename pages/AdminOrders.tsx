@@ -50,69 +50,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
     });
   }, [orders, searchTerm, statusFilter]);
 
-  const globalCustomers = useMemo(() => {
-    const customerMap = new Map<
-      string,
-      {
-        id: number | null;
-        name: string;
-        email: string;
-        phone: string;
-        address: string;
-        city: string;
-        state: string;
-        zipCode: string;
-        orderCount: number;
-        totalSpent: number;
-        latestOrderNumber: string;
-        latestOrderDate: string;
-        deletionRequested: boolean;
-      }
-    >();
 
-    orders.forEach((order) => {
-      const email = order.customerEmail || '';
-      if (!email) return;
-      const key = email.toLowerCase();
-      const existing = customerMap.get(key);
-
-      if (existing) {
-        existing.orderCount += 1;
-        existing.totalSpent += order.total;
-        if (new Date(order.createdAt).getTime() > new Date(existing.latestOrderDate).getTime()) {
-          existing.latestOrderNumber = order.orderNumber;
-          existing.latestOrderDate = order.createdAt;
-        }
-        if (order.deletionRequested) existing.deletionRequested = true;
-        return;
-      }
-
-      customerMap.set(key, {
-        id: order.customerId ?? null,
-        name: order.customerName,
-        email: order.customerEmail,
-        phone: order.customerPhone,
-        address: order.shippingAddress,
-        city: order.city,
-        state: order.state,
-        zipCode: order.zipCode,
-        orderCount: 1,
-        totalSpent: order.total,
-        latestOrderNumber: order.orderNumber,
-        latestOrderDate: order.createdAt,
-        deletionRequested: !!order.deletionRequested,
-      });
-    });
-
-    return customerMap;
-  }, [orders]);
-
-  const uniqueCustomers = useMemo(() => {
-    const emailsInView = new Set(filteredOrders.map(o => (o.customerEmail || '').toLowerCase()));
-    return Array.from(globalCustomers.values())
-      .filter(customer => customer.id !== null && emailsInView.has((customer.email || '').toLowerCase()))
-      .sort((a, b) => b.orderCount - a.orderCount);
-  }, [globalCustomers, filteredOrders]);
 
   const stats = useMemo(() => {
     return {
@@ -243,108 +181,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
             </div>
           </div>
 
-          {/* Tab Toggle */}
-          <div className="flex gap-4 mb-8">
-            <button 
-              onClick={() => setActiveTab('orders')} 
-              className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeTab === 'orders' ? 'bg-igo-dark text-white shadow-xl' : 'bg-white text-gray-400 hover:bg-gray-50 hover:text-igo-dark border border-gray-100'}`}
-            >
-              All Orders
-            </button>
-            <button 
-              onClick={() => setActiveTab('cx')} 
-              className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeTab === 'cx' ? 'bg-igo-dark text-white shadow-xl' : 'bg-white text-gray-400 hover:bg-gray-50 hover:text-igo-dark border border-gray-100'}`}
-            >
-              All CX (Customers)
-            </button>
-          </div>
-
-          {activeTab === 'cx' && (
-          <div className="bg-white rounded-3xl border border-gray-100 p-6 mb-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center justify-between gap-4 mb-5">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-igo-lime mb-2">
-                  Customer Profiles & History
-                </p>
-                <h2 className="text-2xl font-black text-igo-dark">
-                  {uniqueCustomers.length} Total Unique Customers
-                </h2>
-              </div>
-              <p className="text-sm text-igo-muted hidden md:block">
-                View lifetime spending and order count per customer.
-              </p>
-            </div>
-
-            {uniqueCustomers.length === 0 ? (
-              <p className="text-sm text-igo-muted">No customer details found for this search.</p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 max-h-[400px] overflow-y-auto pb-4 custom-scrollbar">
-                {uniqueCustomers.map((customer) => (
-                  <div
-                    key={customer.email}
-                    className={`rounded-3xl border p-5 transition-colors ${
-                      customer.deletionRequested 
-                        ? 'border-red-300 bg-red-50/50 hover:border-red-600' 
-                        : 'border-gray-100 bg-gray-50 hover:border-igo-lime'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-lg font-black text-igo-dark">{customer.name}</p>
-                      {customer.deletionRequested && (
-                        <div className="flex items-center gap-1 bg-red-600 px-2 py-0.5 rounded-lg">
-                          <AlertCircle className="w-3 h-3 text-white" />
-                          <span className="text-[8px] font-black text-white uppercase tracking-tighter">Deletion Requested</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-3 space-y-2 text-sm text-igo-muted">
-                      <p>{customer.email}</p>
-                      <p>{customer.phone}</p>
-                      <p className="truncate" title={`${customer.address}, ${customer.city}`}>
-                        {customer.address}, {customer.city}
-                      </p>
-                    </div>
-                    <div className="mt-4 flex flex-col gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                      <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-igo-dark pb-2 border-b border-gray-50">
-                        <span className="text-igo-muted">Lifetime Orders</span>
-                        <span>{customer.orderCount}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-igo-dark">
-                        <span className="text-igo-muted">Lifetime Value</span>
-                        <span className="text-green-600 font-bold text-sm bg-green-50 px-2 py-0.5 rounded-lg">{formatCurrency(customer.totalSpent)}</span>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => setSearchTerm(customer.email)}
-                      className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl bg-igo-dark px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all shadow-md hover:shadow-lg hover:bg-igo-lime hover:text-igo-dark hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                      <Filter className="w-3.5 h-3.5" />
-                      Isolate Orders
-                    </button>
-                    
-                    {customer.id && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`PERMANENTLY DELETE ACCOUNT: ${customer.email}?\n\nThis will remove their profile, notifications, and sessions. This CANNOT be undone.`)) {
-                            onDeleteCustomer(customer.id);
-                          }
-                        }}
-                        className="mt-2 w-full flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-red-600 transition-all border border-red-100 hover:bg-red-600 hover:text-white"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete Permanently
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          )}
-
-          {activeTab === 'orders' && (
-          <>
+          {/* Orders Table */}
           <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             {filteredOrders.length === 0 ? (
               <div className="p-12 text-center">
@@ -493,8 +330,6 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
           <div className="mt-6 text-center text-sm text-igo-muted font-medium">
             Showing {filteredOrders.length} of {orders.length} orders
           </div>
-          </>
-          )}
         </div>
       </section>
 

@@ -23,6 +23,7 @@ import AdminLayout from './components/AdminLayout';
 import AdminLogin from './pages/AdminLogin';
 import AdminProducts from './pages/AdminProducts';
 import AdminInventory from './pages/AdminInventory';
+import AdminCustomers from './pages/AdminCustomers';
 import CustomerAuth from './pages/CustomerAuth';
 import CustomerProfile from './pages/CustomerProfile';
 import { customerApi } from './services/customerApi';
@@ -928,6 +929,18 @@ const App: React.FC = () => {
               );
             case Page.AdminLeads:
               return <AdminLeads onNavigate={(page) => handlePageChange(page)} />;
+            case Page.AdminCustomers:
+              return (
+                <AdminCustomers 
+                  orders={orders} 
+                  onDeleteCustomer={handleDeleteCustomer} 
+                  onNavigateToOrders={(email) => {
+                    // Custom logic to navigate to orders and filter by this email could be implemented,
+                    // but for now we route back to orders. The admin can use the search bar.
+                    handlePageChange(Page.AdminOrders);
+                  }}
+                />
+              );
             case Page.AdminInventory:
               return (
                 <AdminInventory 
@@ -978,6 +991,7 @@ const App: React.FC = () => {
 
   const isAdminRoute = [
     Page.AdminOrders,
+    Page.AdminCustomers,
     Page.AdminLeads,
     Page.AdminProducts,
     Page.AdminInventory,

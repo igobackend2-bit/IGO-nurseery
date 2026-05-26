@@ -48,7 +48,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const menuItems = [
     { id: Page.AdminOverview, label: 'Command Center', icon: Activity },
-    { id: Page.AdminOrders, label: 'Order Stream', icon: Package },
+    { id: Page.AdminOrders, label: 'All Orders', icon: Package },
+    { id: Page.AdminCustomers, label: 'All CX (Customers)', icon: User },
     { id: Page.AdminLeads, label: 'CRM Inquiries', icon: Users },
     { id: Page.AdminProducts, label: 'Products', icon: Package },
     { id: Page.AdminInventory, label: 'Stock & Remove', icon: ShoppingBag },
