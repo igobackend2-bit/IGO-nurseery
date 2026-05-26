@@ -34,25 +34,18 @@ const GardenAssistant: React.FC = () => {
     
     setResults(generatedResults);
 
-    // Save as a lead for the admin to see
-    const newLead = {
-      id: `ai-${Date.now()}`,
+    const { customerApi } = await import('../services/customerApi');
+    await customerApi.submitLead({
       customerName: 'AI Generated Profile',
       customerEmail: 'assistant@igo.tech',
+      customerPhone: '',
       type: 'consultation',
-      status: 'new',
-      createdAt: new Date().toISOString(),
       location: formData.location,
+      reason: `AI DESIGN REQUEST: ${formData.userType} project for ${formData.environment} environment. Interested in ${formData.interests.join(', ')}.`,
       issue: `AI DESIGN REQUEST: ${formData.userType} project for ${formData.environment} environment. Interested in ${formData.interests.join(', ')}.`,
       selectedPlan: formData.budget,
-      chatHistory: [
-        { sender: 'customer', message: `I've used the AI Assistant to generate a blueprint for my ${formData.userType} in ${formData.location}. My environment is ${formData.environment} and my budget is ${formData.budget}.`, timestamp: new Date().toISOString() },
-        { sender: 'admin', message: `SYSTEM: AI Blueprint captured. Summary: ${generatedResults.plants.map(p => p.name).join(', ')}. Estimate: ${generatedResults.estimate}.`, timestamp: new Date().toISOString() }
-      ]
-    };
-
-    const existingLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-    localStorage.setItem('igo_leads', JSON.stringify([newLead, ...existingLeads]));
+      message: `I've used the AI Assistant to generate a blueprint for my ${formData.userType} in ${formData.location}. My environment is ${formData.environment} and my budget is ${formData.budget}.\n\nSYSTEM: AI Blueprint captured. Summary: ${generatedResults.plants.map((p: any) => p.name).join(', ')}. Estimate: ${generatedResults.estimate}.`
+    });
 
     setIsGenerating(false);
     setStep(6);

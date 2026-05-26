@@ -57,19 +57,14 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
     [orders, selectedOrderId]
   );
 
-  const loadLeads = () => {
-    const allLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
+  const loadLeads = async () => {
+    const allLeads = await customerApi.getLeads();
     const myLeads = allLeads.filter((l: Lead) => l.customerEmail === customer.email);
     setCustomerLeads(myLeads);
   };
 
   React.useEffect(() => {
     loadLeads();
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'igo_leads') loadLeads();
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
   }, [customer.email]);
 
   // Sync with URL changes
