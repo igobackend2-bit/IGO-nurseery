@@ -15,7 +15,8 @@ ALTER TABLE orders
 ALTER TABLE order_items
   ADD COLUMN IF NOT EXISTS product_name     TEXT,
   ADD COLUMN IF NOT EXISTS product_image    TEXT,
-  ADD COLUMN IF NOT EXISTS product_category TEXT;
+  ADD COLUMN IF NOT EXISTS product_category TEXT,
+  ADD COLUMN IF NOT EXISTS product_price    DECIMAL(10, 2);
 
 -- PART 3: Drop the FK constraint on order_items.product_id
 ALTER TABLE order_items
@@ -58,7 +59,7 @@ FROM information_schema.columns
 WHERE table_name IN ('orders', 'order_items', 'notifications')
   AND column_name IN (
     'tracking_number','customer_name','customer_email','customer_phone','last_four',
-    'product_name','product_image','product_category',
+    'product_name','product_image','product_category','product_price',
     'customer_id','is_read','target_page','target_id'
   )
 ORDER BY table_name, column_name;
