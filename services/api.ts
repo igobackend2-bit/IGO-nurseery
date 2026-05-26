@@ -255,7 +255,6 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
       product_image:    item.product.image,
       product_category: item.product.category,
       quantity:         item.quantity,
-      price:            item.product.price,
     }));
 
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);

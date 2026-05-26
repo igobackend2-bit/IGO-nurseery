@@ -431,10 +431,11 @@ const App: React.FC = () => {
 
   const navigateTo = (path: string) => {
     const targetPath = normalizePath(path);
-    const currentPath = normalizePath(window.location.pathname);
+    const targetPathWithQuery = path.startsWith('/') ? path : `/${path}`;
+    const currentPathWithQuery = window.location.pathname + window.location.search;
 
-    if (targetPath !== currentPath || window.location.hash) {
-      window.history.pushState({}, '', targetPath);
+    if (targetPathWithQuery !== currentPathWithQuery || window.location.hash) {
+      window.history.pushState({}, '', targetPathWithQuery);
     }
     syncRouteWithLocation();
   };
@@ -629,49 +630,47 @@ const App: React.FC = () => {
       estimatedDelivery,
     };
     
-    // 1. Save to Backend DB (Background)
+    // 1. Save to Backend DB
     const payload = createOrderPayload(orderData, cartItems, customer?.id);
     
-    submitOrder(payload).then(response => {
+    try {
+      const response = await submitOrder(payload);
       console.log('✅ Order saved to Supabase directly');
-      // Set the order number from the actual payload for consistency
       setCurrentOrder({ orderNumber: response.order.orderNumber, total });
-    }).catch(e => console.error('⚠️ DB Error:', e));
 
-    // 1b. Deduct stock & trigger alarms
-    const lowStockAlerts: any[] = [];
-    for (const item of cartItems) {
-      const currentStock = item.product.stock || 0;
-      const newStock = Math.max(0, currentStock - item.quantity);
-      productApi.updateProduct(item.product.id, { stock: newStock }).catch(e => console.error('Stock deduction error', e));
-      
-      if (newStock < 5) {
-        lowStockAlerts.push({
-          id: `stock-${Date.now()}-${item.product.id}`,
-          type: 'inventory',
-          title: 'LOW STOCK ALERT',
-          message: `${item.product.name} has fallen below safe levels (${newStock} remaining). Restock immediately.`,
-          time: new Date().toISOString(),
-          read: false
-        });
+      // 1b. Deduct stock & trigger alarms
+      const lowStockAlerts: any[] = [];
+      for (const item of cartItems) {
+        const currentStock = item.product.stock || 0;
+        const newStock = Math.max(0, currentStock - item.quantity);
+        productApi.updateProduct(item.product.id, { stock: newStock }).catch(e => console.error('Stock deduction error', e));
+        
+        if (newStock < 5) {
+          lowStockAlerts.push({
+            id: `stock-${Date.now()}-${item.product.id}`,
+            type: 'inventory',
+            title: 'LOW STOCK ALERT',
+            message: `${item.product.name} has fallen below safe levels (${newStock} remaining). Restock immediately.`,
+            time: new Date().toISOString(),
+            read: false
+          });
+        }
       }
-    }
-    
-    if (lowStockAlerts.length > 0) {
-       setAdminNotifications(prev => [...lowStockAlerts, ...prev]);
-    }
 
-    // 2. Send Emails (Background)
-    const emailData = {
-      to: orderData.email,
-      subject: `Order Confirmation #${orderNumber}`,
-      orderNumber,
-      trackingNumber,
-      customerName: `${orderData.firstName} ${orderData.lastName}`,
-      estimatedDelivery,
-      total,
-      items: cartItems.map(item => ({ name: item.product.name, quantity: item.quantity, price: item.product.price })),
-    };
+      if (lowStockAlerts.length > 0) {
+        setAdminNotifications(prev => [...lowStockAlerts, ...prev]);
+      }
+
+      const emailData = {
+        to: orderData.email,
+        subject: `Order Confirmation #${response.order.orderNumber}`,
+        orderNumber: response.order.orderNumber,
+        trackingNumber: response.order.trackingNumber,
+        customerName: `${orderData.firstName} ${orderData.lastName}`,
+        estimatedDelivery,
+        total,
+        items: cartItems.map(item => ({ name: item.product.name, quantity: item.quantity, price: item.product.price })),
+      };
 
     Promise.allSettled([
       sendOrderConfirmationEmail(emailData),
@@ -685,16 +684,19 @@ const App: React.FC = () => {
     setOrders(updatedOrders);
     localStorage.setItem('orders', JSON.stringify(updatedOrders));
     
-    setCurrentOrder({ orderNumber, total });
     setCartItems([]);
     
-    showToast(`Order #${orderNumber} placed successfully!`, 'success');
+    showToast(`Order #${response.order.orderNumber} placed successfully!`, 'success');
     
     if (customer) {
       fetchCustomerData();
     }
     
     navigateTo(buildPath(Page.OrderConfirmation));
+    } catch (e) {
+      console.error('⚠️ DB Error:', e);
+      alert('Failed to place order. Please try again.');
+    }
   };
 
   const handleContinueToHome = () => {
