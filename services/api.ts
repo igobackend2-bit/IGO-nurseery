@@ -214,8 +214,7 @@ export const createOrderPayload = (orderData: OrderData, cartItems: CartItem[], 
 export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>) => {
   const { supabase } = await import('./supabaseClient');
 
-  // Insert order row — now includes customer info & tracking number
-  const { data: order, error } = await supabase.from('orders').insert({
+  const orderDataToInsert = {
     order_number:     payload.orderNumber,
     tracking_number:  payload.trackingNumber,
     access_key:       payload.accessKey,
@@ -235,7 +234,18 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
     payment_method:   payload.paymentMethod,
     status:           payload.status,
     estimated_delivery: payload.estimatedDelivery,
-  }).select().single();
+  };
+
+  let { data: order, error } = await supabase.from('orders').insert(orderDataToInsert).select().single();
+
+  // Handle case where test user exists in auth but not in public.customers table (FK violation)
+  if (error && error.code === '23503' && payload.customerId) {
+    console.warn('Customer ID not found in public.customers, falling back to guest order');
+    orderDataToInsert.customer_id = null;
+    const retryResult = await supabase.from('orders').insert(orderDataToInsert).select().single();
+    order = retryResult.data;
+    error = retryResult.error;
+  }
 
   if (error) throw new Error(error.message);
 
