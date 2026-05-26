@@ -949,7 +949,7 @@ const App: React.FC = () => {
                 </div>
               );
             default:
-              return <AdminOverview onNavigate={(page) => handlePageChange(page)} />;
+              return <AdminOverview orders={orders} onNavigate={(page) => handlePageChange(page)} />;
           }
         };
 
