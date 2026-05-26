@@ -23,10 +23,23 @@ if (existsSync(envPath)) {
   }
 }
 
-const PORT          = process.env.API_PORT || 4000;
-const RESEND_KEY    = process.env.RESEND_API_KEY || '';
-const ADMIN_EMAIL   = process.env.ADMIN_EMAIL || 'igonursery@gmail.com';
-const FROM_EMAIL    = process.env.FROM_EMAIL || 'IGO Nursery <noreply@igonursery.com>';
+const PORT            = process.env.API_PORT || 4000;
+const RESEND_KEY      = process.env.RESEND_API_KEY || '';
+const ADMIN_EMAIL     = process.env.ADMIN_EMAIL || 'igonursery@gmail.com';
+const FROM_EMAIL      = process.env.FROM_EMAIL || 'IGO Nursery <noreply@igonursery.com>';
+const SUPABASE_URL    = process.env.SUPABASE_URL || '';
+const SUPABASE_SRK    = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+// ─── Supabase Admin client (lazy-loaded) ─────────────────────────────────────
+let _supabaseAdmin = null;
+async function getSupabaseAdmin() {
+  if (_supabaseAdmin) return _supabaseAdmin;
+  const { createClient } = await import('@supabase/supabase-js');
+  _supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SRK, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+  return _supabaseAdmin;
+}
 
 // ─── Resend helper ───────────────────────────────────────────────────────────
 async function sendViaResend({ to, subject, html, text }) {
@@ -431,6 +444,71 @@ const server = createServer(async (req, res) => {
       });
     }
 
+    // ── Auth: Signup (generate OTP via Admin API → send via Resend) ─────
+    else if (url === '/api/auth/signup') {
+      const { email, password, name, phone } = body;
+      if (!email || !password) throw new Error('email and password are required');
+
+      const supabase = await getSupabaseAdmin();
+
+      // 1. Create or fetch the user via Admin API
+      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        password,
+        options: { data: { name: name || '', phone: phone || '' } }
+      });
+      if (linkErr) throw new Error(linkErr.message);
+
+      const otp = linkData.properties.email_otp;
+      const userId = linkData.user.id;
+
+      // 2. Ensure customer row exists in DB
+      await supabase.from('customers').upsert({
+        id: userId,
+        email,
+        name: name || '',
+        phone: phone || ''
+      }, { onConflict: 'id' });
+
+      // 3. Send OTP via Resend
+      const html = buildOtpEmail({ name: name || 'Valued Customer', otp });
+      await sendViaResend({
+        to: email,
+        subject: `${otp} is your IGO Nursery verification code`,
+        html,
+      });
+
+      console.log(`✅ Signup OTP sent → ${email}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, message: 'OTP sent to your email.' }));
+    }
+
+    // ── Auth: Resend OTP ─────────────────────────────────────────────────
+    else if (url === '/api/auth/resend') {
+      const { email, name } = body;
+      if (!email) throw new Error('email is required');
+
+      const supabase = await getSupabaseAdmin();
+      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: 'signup',
+        email,
+      });
+      if (linkErr) throw new Error(linkErr.message);
+
+      const otp = linkData.properties.email_otp;
+      const html = buildOtpEmail({ name: name || 'Valued Customer', otp });
+      await sendViaResend({
+        to: email,
+        subject: `${otp} is your IGO Nursery verification code`,
+        html,
+      });
+
+      console.log(`✅ Resend OTP → ${email}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, message: 'New OTP sent to your email.' }));
+    }
+
     // ── Generic / Admin update ───────────────────────────────────────────
     else if (url === '/api/emails/admin-update' || url === '/api/emails/send') {
       emailResult = await sendViaResend({
@@ -461,7 +539,10 @@ server.listen(PORT, () => {
   console.log(`\n🌿 IGO Nursery Email Server running on port ${PORT}`);
   console.log(`📧 Using Resend: ${RESEND_KEY && RESEND_KEY !== 're_PASTE_YOUR_KEY_HERE' ? '✅ Configured' : '⚠️  API key not set yet'}`);
   console.log(`📬 Admin alerts → ${ADMIN_EMAIL}`);
+  console.log(`🔐 Supabase Admin: ${SUPABASE_URL && SUPABASE_SRK ? '✅ Connected' : '⚠️  Not configured'}`);
   console.log(`\nRoutes ready:`);
+  console.log(`  POST /api/auth/signup      ← NEW: Proxy signup OTP via Resend`);
+  console.log(`  POST /api/auth/resend       ← NEW: Resend OTP via Resend`);
   console.log(`  POST /api/emails/otp`);
   console.log(`  POST /api/emails/order-confirmation`);
   console.log(`  POST /api/emails/order-shipped`);

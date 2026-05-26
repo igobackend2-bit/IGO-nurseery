@@ -107,36 +107,21 @@ export const customerApi = {
   },
 
   async signup(data: any) {
-    const { supabase } = await import('./supabaseClient');
-    const { data: authData, error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          name: data.name,
-          phone: data.phone
-        }
-      }
-    });
-    
-    if (error) {
-      throw new Error(error.message);
-    }
-    
-    // Attempt to insert customer profile directly
-    if (authData.user) {
-      const { error: dbError } = await supabase.from('customers').insert({
-        id: authData.user.id,
+    // Route through our custom backend to send OTP via Resend,
+    // bypassing Supabase's strictly rate-limited internal email service.
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         email: data.email,
+        password: data.password,
         name: data.name,
-        phone: data.phone
-      });
-      if (dbError && dbError.code !== '23505') { // ignore duplicate key if they re-signup
-         console.error('Customer profile insertion failed:', dbError);
-      }
-    }
-    
-    return { message: 'Signup initiated. Please check your email for the OTP.' };
+        phone: data.phone,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Signup failed');
+    return { message: json.message || 'OTP sent to your email.' };
   },
 
   async verifyOtp(data: { email: string; otp: string }) {
