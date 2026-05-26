@@ -29,15 +29,18 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'date' | 'amount-high' | 'above-avg'>('date');
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [pendingStatuses, setPendingStatuses] = useState<Record<string, any>>({});
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState<'orders' | 'cx'>('orders');
 
+  const avgOrderValue = useMemo(() => orders.length > 0 ? orders.reduce((s, o) => s + o.total, 0) / orders.length : 0, [orders]);
+
   const filteredOrders = useMemo(() => {
     const cleanSearchTerm = searchTerm.trim().toLowerCase();
-    return orders.filter((order) => {
+    let result = orders.filter((order) => {
       const matchesSearch =
         (order.orderNumber || '').toLowerCase().includes(cleanSearchTerm) ||
         (order.customerName || '').toLowerCase().includes(cleanSearchTerm) ||
@@ -45,10 +48,20 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
         (order.customerPhone || '').toLowerCase().includes(cleanSearchTerm);
 
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      const matchesAboveAvg = sortBy !== 'above-avg' || order.total >= avgOrderValue;
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesAboveAvg;
     });
-  }, [orders, searchTerm, statusFilter]);
+
+    if (sortBy === 'amount-high') {
+      result = [...result].sort((a, b) => b.total - a.total);
+    } else {
+      result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return result;
+  }, [orders, searchTerm, statusFilter, sortBy, avgOrderValue]);
+
 
 
 
@@ -125,36 +138,44 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
         <div className="max-w-7xl mx-auto px-4">
           {/* Stats — click any card to filter the table below */}
           <div className="grid md:grid-cols-5 gap-4 mb-12">
-            {/* Total Orders */}
+            {/* Total Orders — reset all, show everything */}
             <div
-              onClick={() => { setStatusFilter('all'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              onClick={() => { setStatusFilter('all'); setSortBy('date'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
               className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
-                statusFilter === 'all' ? 'border-igo-lime shadow-igo-lime/20 scale-[1.02]' : 'border-gray-100 hover:border-igo-lime/50'
+                statusFilter === 'all' && sortBy === 'date' ? 'border-igo-lime shadow-igo-lime/20 scale-[1.02]' : 'border-gray-100 hover:border-igo-lime/50'
               }`}
             >
               <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2 group-hover:text-igo-dark transition-colors">Total Orders</p>
               <p className="text-3xl font-black text-igo-dark">{stats.totalOrders}</p>
-              {statusFilter === 'all' && <p className="text-[8px] font-black text-igo-lime uppercase tracking-widest mt-2">● Viewing All</p>}
+              {statusFilter === 'all' && sortBy === 'date' && <p className="text-[8px] font-black text-igo-lime uppercase tracking-widest mt-2">● All Orders</p>}
             </div>
 
-            {/* Total Revenue */}
+            {/* Total Revenue — sort by highest amount */}
             <div
-              onClick={() => { setStatusFilter('all'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              onClick={() => { setStatusFilter('all'); setSortBy('amount-high'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
               className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
-                statusFilter === 'all' ? 'border-green-300 shadow-green-100' : 'border-gray-100 hover:border-green-200'
+                sortBy === 'amount-high' ? 'border-green-400 shadow-green-100 scale-[1.02]' : 'border-gray-100 hover:border-green-300'
               }`}
             >
-              <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Total Revenue</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest mb-2 transition-colors ${sortBy === 'amount-high' ? 'text-green-700' : 'text-igo-muted'}`}>Total Revenue</p>
               <p className="text-2xl font-black text-green-600">{formatCurrency(stats.totalRevenue)}</p>
+              {sortBy === 'amount-high'
+                ? <p className="text-[8px] font-black text-green-600 uppercase tracking-widest mt-2">● Sorted: Highest First</p>
+                : <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mt-2">Click to sort by revenue ↓</p>}
             </div>
 
-            {/* Avg Order Value */}
+            {/* Avg Order Value — show only above-average orders */}
             <div
-              onClick={() => { setStatusFilter('all'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
-              className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-gray-300 transition-all duration-200 group"
+              onClick={() => { setStatusFilter('all'); setSortBy('above-avg'); setSearchTerm(''); setTimeout(() => document.getElementById('orders-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              className={`bg-white rounded-2xl p-6 border-2 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg group ${
+                sortBy === 'above-avg' ? 'border-purple-400 shadow-purple-100 scale-[1.02]' : 'border-gray-100 hover:border-purple-300'
+              }`}
             >
-              <p className="text-[10px] font-black uppercase tracking-widest text-igo-muted mb-2">Avg Order Value</p>
-              <p className="text-2xl font-black text-igo-dark">{formatCurrency(stats.avgOrderValue)}</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest mb-2 transition-colors ${sortBy === 'above-avg' ? 'text-purple-700' : 'text-igo-muted'}`}>Avg Order Value</p>
+              <p className={`text-2xl font-black ${sortBy === 'above-avg' ? 'text-purple-700' : 'text-igo-dark'}`}>{formatCurrency(stats.avgOrderValue)}</p>
+              {sortBy === 'above-avg'
+                ? <p className="text-[8px] font-black text-purple-500 uppercase tracking-widest mt-2">● Above Avg Only</p>
+                : <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mt-2">Click to filter above avg</p>}
             </div>
 
             {/* Shipped */}
@@ -217,20 +238,23 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
             </div>
           </div>
 
-          {/* Active Filter Banner */}
-          {statusFilter !== 'all' && (
+          {/* Active Filter / Sort Banner */}
+          {(statusFilter !== 'all' || sortBy !== 'date') && (
             <div id="orders-table" className="flex items-center justify-between bg-igo-lime/10 border border-igo-lime/30 rounded-2xl px-6 py-3 mb-4 animate-in fade-in duration-300">
               <div className="flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-igo-lime animate-pulse" />
                 <p className="text-sm font-black text-igo-dark uppercase tracking-widest">
-                  Showing: <span className="text-igo-lime">{statusFilter.toUpperCase()}</span> orders ({filteredOrders.length} result{filteredOrders.length !== 1 ? 's' : ''})
+                  {sortBy === 'amount-high' && 'Sorted by: Highest Revenue — '}
+                  {sortBy === 'above-avg' && `Showing: Above Avg (≥${formatCurrency(avgOrderValue)}) — `}
+                  {statusFilter !== 'all' && <><span className="text-igo-lime">{statusFilter.toUpperCase()}</span>{' '}</>}
+                  <span className="text-gray-500 font-bold normal-case">({filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''})</span>
                 </p>
               </div>
               <button
-                onClick={() => setStatusFilter('all')}
+                onClick={() => { setStatusFilter('all'); setSortBy('date'); }}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-igo-muted hover:text-red-500 transition-colors"
               >
-                <X className="w-3 h-3" /> Clear Filter
+                <X className="w-3 h-3" /> Clear All
               </button>
             </div>
           )}
