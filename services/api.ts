@@ -157,7 +157,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
         customer_id: customerId,
         title: `Order ${orderNumber} — ${status}`,
         message: `Your order status has been updated to: ${status}.`,
-        type: status === 'cancelled' ? 'cancelled' : 'shipped',
+        type: status === 'cancelled' ? 'cancelled' : 'order',
         target_page: 'customer-profile',
         target_id: orderNumber,
       }).then(({ error }) => { if (error) console.error('Notification insert failed:', error.message); });
@@ -276,6 +276,19 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
 
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
     if (itemsError) throw new Error(itemsError.message);
+  }
+
+  // Push an in-app notification for the customer about their new order
+  if (payload.customerId) {
+    await supabase.from('notifications').insert({
+      customer_id: payload.customerId,
+      title: `Order Confirmed: #${payload.orderNumber}`,
+      message: `Your order has been placed successfully and is now being processed.`,
+      type: 'order',
+      target_page: 'customer-profile',
+      target_id: 'orders',
+      is_read: false
+    }).catch(e => console.error('Failed to create order notification:', e));
   }
 
   return { order: payload as any, accessKey: payload.accessKey };

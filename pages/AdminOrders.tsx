@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Search, Filter, CheckCircle, Package, Clock, Mail, Eye, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Search, Filter, CheckCircle, Package, Clock, Mail, Eye, Trash2, AlertCircle, X } from 'lucide-react';
 import { Order, Page } from '../types';
 import { sendOrderConfirmationEmail } from '../services/orderEmailService';
 
@@ -32,6 +32,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [pendingStatuses, setPendingStatuses] = useState<Record<string, any>>({});
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
 
   const filteredOrders = useMemo(() => {
     const cleanSearchTerm = searchTerm.trim().toLowerCase();
@@ -230,6 +231,9 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="picked">Picked</option>
+                  <option value="packed">Packed</option>
                   <option value="shipped">Shipped</option>
                   <option value="delivered">Delivered</option>
                   <option value="cancelled">Cancelled</option>
@@ -392,6 +396,9 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
                             >
                               <option value="pending">Pending</option>
                               <option value="processing">Processing</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="picked">Picked</option>
+                              <option value="packed">Packed</option>
                               <option value="shipped">Shipped</option>
                               <option value="delivered">Delivered</option>
                               <option value="cancelled">Cancelled</option>
@@ -419,7 +426,7 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => onOpenOrder(order.orderNumber)}
+                              onClick={() => setViewingOrder(order)}
                               className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wider text-igo-dark transition-colors hover:border-igo-dark"
                               title="View order details"
                             >
@@ -468,6 +475,92 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Order View Modal */}
+      {viewingOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-igo-dark/60 backdrop-blur-sm" onClick={() => setViewingOrder(null)}></div>
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl relative z-10 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-black text-igo-dark">Order #{viewingOrder.orderNumber}</h3>
+                <p className="text-xs font-black text-igo-muted uppercase tracking-widest">{new Date(viewingOrder.createdAt).toLocaleString('en-IN')}</p>
+              </div>
+              <button onClick={() => setViewingOrder(null)} className="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-6">
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Customer Details */}
+                <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-igo-lime mb-3">Customer Information</h4>
+                  <p className="font-bold text-igo-dark text-lg">{viewingOrder.customerName}</p>
+                  <p className="text-sm text-igo-muted">{viewingOrder.customerEmail}</p>
+                  <p className="text-sm text-igo-muted">{viewingOrder.customerPhone}</p>
+                </div>
+                
+                {/* Shipping Details */}
+                <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-igo-lime mb-3">Shipping Address</h4>
+                  <p className="text-sm text-igo-dark font-medium leading-relaxed">
+                    {viewingOrder.shippingAddress}<br/>
+                    {viewingOrder.city}, {viewingOrder.state} {viewingOrder.zipCode}
+                  </p>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-igo-lime mb-3">Order Items</h4>
+                <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[10px] text-igo-muted">Product</th>
+                        <th className="px-4 py-3 text-center font-black uppercase tracking-widest text-[10px] text-igo-muted">Qty</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[10px] text-igo-muted">Price</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[10px] text-igo-muted">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {viewingOrder.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="px-4 py-3 font-bold text-igo-dark">{item.product.name}</td>
+                          <td className="px-4 py-3 text-center font-bold">{item.quantity}</td>
+                          <td className="px-4 py-3 text-right text-igo-muted">{formatCurrency(item.product.price)}</td>
+                          <td className="px-4 py-3 text-right font-black text-igo-dark">{formatCurrency(item.product.price * item.quantity)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 ml-auto md:w-1/2">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-igo-muted font-bold"><span>Subtotal</span><span>{formatCurrency(viewingOrder.subtotal)}</span></div>
+                  <div className="flex justify-between text-igo-muted font-bold"><span>Tax</span><span>{formatCurrency(viewingOrder.tax)}</span></div>
+                  <div className="flex justify-between text-igo-muted font-bold"><span>Delivery</span><span>{formatCurrency(viewingOrder.deliveryCharge)}</span></div>
+                  <div className="pt-3 border-t border-gray-200 flex justify-between items-center mt-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-igo-dark">Grand Total</span>
+                    <span className="text-xl font-black text-green-600">{formatCurrency(viewingOrder.total)}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50/50">
+              <button onClick={() => setViewingOrder(null)} className="w-full py-4 bg-igo-dark text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-black transition-colors">
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

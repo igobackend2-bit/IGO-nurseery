@@ -119,7 +119,7 @@ export interface Order {
   total: number;
   paymentMethod: 'card' | 'upi' | 'bank-transfer';
   lastFour?: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'processing' | 'confirmed' | 'picked' | 'packed' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   estimatedDelivery: string;
   deletionRequested?: boolean;

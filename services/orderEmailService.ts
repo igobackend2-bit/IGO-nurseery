@@ -190,12 +190,42 @@ const buildOrderStatusUpdateHtml = (customerName: string, orderNumber: string, s
   const trackUrl = `${origin()}/customer-profile/orders`;
   const statusColor = status === 'cancelled' ? '#e53935' : status === 'delivered' ? '#2d7a2d' : '#1565c0';
 
+  let emoji = '📢';
+  let title = 'Order Status Update';
+  let message = 'There has been an update to your order.';
+
+  if (status === 'confirmed') {
+    emoji = '✅';
+    title = 'Order Confirmed';
+    message = 'Your order has been confirmed and we are getting it ready for you!';
+  } else if (status === 'picked') {
+    emoji = '🪴';
+    title = 'Plants Picked';
+    message = 'Our garden experts have carefully hand-picked the best plants for your order!';
+  } else if (status === 'packed') {
+    emoji = '📦';
+    title = 'Order Packed';
+    message = 'Your order is packed securely and is waiting to be shipped!';
+  } else if (status === 'shipped') {
+    emoji = '🚚';
+    title = 'Order Shipped';
+    message = 'Your order is on the way!';
+  } else if (status === 'delivered') {
+    emoji = '🎉';
+    title = 'Order Delivered';
+    message = 'Your order has been delivered. Happy gardening!';
+  } else if (status === 'cancelled') {
+    emoji = '❌';
+    title = 'Order Cancelled';
+    message = 'Your order has been cancelled.';
+  }
+
   return emailWrap(`
-${emailHeader('📢', 'Order Status Update', `Order #${orderNumber}`)}
+${emailHeader(emoji, title, `Order #${orderNumber}`)}
 <div style="padding:36px 40px;">
   <p style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:10px;">Hi ${customerName},</p>
   <p style="font-size:14px;color:#666;line-height:1.7;margin-bottom:28px;">
-    There has been an update to your order.
+    ${message}
   </p>
   ${infoBox([
     ['Order ID', `#${orderNumber}`],
