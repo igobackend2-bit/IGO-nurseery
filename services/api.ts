@@ -11,7 +11,7 @@ export const normalizeOrder = (raw: any): Order => {
     product: {
       id:          oi.product_id   || oi.products?.id          || '',
       name:        oi.product_name || oi.products?.name        || 'Product',
-      price:       Number(oi.price ?? oi.products?.price ?? 0),
+      price:       Number(oi.product_price ?? oi.price ?? oi.products?.price ?? 0),
       category:    oi.product_category || oi.products?.category || '',
       image:       oi.product_image    || oi.products?.image    || '',
       description: oi.products?.description || '',
@@ -144,17 +144,10 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     const customerName = orderData.customer_name ?? 'Customer';
 
     if (customerEmail) {
-      // Send email via Vercel serverless function (replaces non-executable mailer.php)
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: customerEmail,
-          subject: `Your IGO Nursery Order ${orderNumber} — Status: ${status}`,
-          text: `Dear ${customerName},\n\nYour order ${orderNumber} has been updated to: ${status}.\n\nThank you for choosing IGO Nursery Agritech Farms.`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:8px"><h2 style="color:#1F3864">IGO Nursery Order Update</h2><p>Dear <strong>${customerName}</strong>,</p><p>Your order <strong>${orderNumber}</strong> status has been updated to: <strong style="color:#2E5090">${status}</strong>.</p><p>Thank you for choosing IGO Nursery Agritech Farms.</p><hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"><p style="font-size:12px;color:#718096">IGO Nursery &bull; igonursery.com</p></div>`,
-        }),
-      }).catch(e => console.error('Email dispatch failed:', e));
+      const { sendOrderStatusUpdateEmail } = await import('./orderEmailService');
+      sendOrderStatusUpdateEmail(customerEmail, customerName, orderNumber, status)
+        .then(r => { if (r.success) console.log(`✅ Status email sent to ${customerEmail}`); })
+        .catch(e => console.error('Email dispatch failed:', e));
     }
 
     // Push in-app notification stored in Supabase (cross-browser, replaces localStorage)
@@ -255,6 +248,7 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
       product_image:    item.product.image,
       product_category: item.product.category,
       quantity:         item.quantity,
+      product_price:    item.product.price,
     }));
 
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);

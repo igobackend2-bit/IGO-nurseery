@@ -33,7 +33,7 @@ import { INITIAL_STORE_PRODUCTS } from './data/storeProducts';
 import { KNOWLEDGE_ARTICLES } from './data/knowledgeArticles';
 import { sendOrderConfirmationEmail, sendAdminOrderNotification } from './services/orderEmailService';
 import LeadCapturePopup from './components/LeadCapturePopup';
-import { submitOrder, createOrderPayload } from './services/api';
+import { submitOrder, createOrderPayload, fetchAdminOrders, updateAdminOrderStatus } from './services/api';
 
 interface ParsedRoute {
   page: Page;
@@ -348,30 +348,39 @@ const App: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
 
-  // Sync admin notifications
+  // Sync admin orders + notifications from Supabase
   useEffect(() => {
-    if (isAdmin) {
-      const fetchAdminNotifications = async () => {
-        try {
-          const { customerApi } = await import('./services/customerApi');
-          const leads = await customerApi.getLeads();
-          const newNotifications = leads
-            .filter((l: any) => l.status === 'new')
-            .map((l: any) => ({
-              id: l.id,
-              type: 'lead',
-              title: `New ${l.type.toUpperCase()}`,
-              message: `${l.customerName} requested ${l.selectedPlan || 'service'}`,
-              time: l.createdAt,
-              read: false
-            }));
-          setAdminNotifications(newNotifications);
-        } catch (e) {
-          console.error('Failed to fetch admin notifications', e);
-        }
-      };
-      fetchAdminNotifications();
-    }
+    if (!isAdmin) return;
+
+    const loadAdminData = async () => {
+      try {
+        // Load all orders from Supabase for the admin panel
+        const { orders: adminOrders } = await fetchAdminOrders('');
+        setOrders(adminOrders);
+      } catch (e) {
+        console.error('Failed to fetch admin orders', e);
+      }
+
+      try {
+        const { customerApi } = await import('./services/customerApi');
+        const leads = await customerApi.getLeads();
+        const newNotifications = leads
+          .filter((l: any) => l.status === 'new')
+          .map((l: any) => ({
+            id: l.id,
+            type: 'lead',
+            title: `New ${l.type.toUpperCase()}`,
+            message: `${l.customerName} requested ${l.selectedPlan || 'service'}`,
+            time: l.createdAt,
+            read: false,
+          }));
+        setAdminNotifications(newNotifications);
+      } catch (e) {
+        console.error('Failed to fetch admin notifications', e);
+      }
+    };
+
+    loadAdminData();
   }, [isAdmin, currentPage]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -712,14 +721,24 @@ const App: React.FC = () => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
-    const updatedOrders = orders.map(o => o.id === orderId ? { ...o, status } : o);
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+    // Optimistic update in local state so the UI responds immediately
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
 
-    // Note: The real email and internal notification are now handled by the backend PATCH endpoint
-    // to ensure consistency and prevent double-emailing.
-      
-    showToast(`Status updated and notified ${order.customerEmail}`, 'success');
+    try {
+      // Persist to Supabase, send email + push in-app notification to the customer
+      await updateAdminOrderStatus('', order.orderNumber, status);
+
+      // Re-fetch fresh orders list from Supabase so admin table stays in sync
+      const { orders: refreshed } = await fetchAdminOrders('');
+      setOrders(refreshed);
+
+      showToast(`Order ${order.orderNumber} → ${status}. Customer notified by email.`, 'success');
+    } catch (e) {
+      console.error('handleUpdateOrderStatus failed:', e);
+      // Roll back optimistic update on failure
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: order.status } : o));
+      showToast('Failed to update order status. Please try again.', 'info');
+    }
   };
 
   const cartCount = useMemo(
@@ -865,7 +884,15 @@ const App: React.FC = () => {
             onLogout={handleCustomerLogout}
             onUpdateProfile={(updatedCustomer) => setCustomer(updatedCustomer)}
             onRefreshNotifications={fetchCustomerData}
-            initialTab={(window.location.search.split('tab=')[1] as any) || 'account'}
+            initialTab={(() => {
+              // Read tab from URL path segment (e.g. /customer-profile/inbox)
+              const pathSegment = window.location.pathname.split('/').filter(Boolean)[1];
+              // Re-attach query string for deep-links like inbox?id=lead-xyz
+              const qs = window.location.search;
+              if (pathSegment) return (qs ? `${pathSegment}${qs}` : pathSegment) as any;
+              // Fallback: legacy ?tab= query param
+              return (window.location.search.split('tab=')[1] as any) || 'account';
+            })()}
           />
         );
       case Page.AdminOrders:

@@ -64,7 +64,7 @@ export const customerApi = {
       window.dispatchEvent(new StorageEvent('storage', { key: 'igo_simulated_emails' }));
 
       // Trigger REAL SMTP Email via Backend
-      await fetch('/api/emails/order-confirmation', {
+      await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -324,9 +324,12 @@ export const customerApi = {
   async getNotifications(email?: string): Promise<{ notifications: Notification[] }> {
     try {
       const { supabase } = await import('./supabaseClient');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { notifications: [] };
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
       if (error) { console.error('getNotifications error:', error.message); return { notifications: [] }; }
       return {
