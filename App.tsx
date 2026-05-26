@@ -351,18 +351,26 @@ const App: React.FC = () => {
   // Sync admin notifications
   useEffect(() => {
     if (isAdmin) {
-      const leads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-      const newNotifications = leads
-        .filter((l: any) => l.status === 'new')
-        .map((l: any) => ({
-          id: l.id,
-          type: 'lead',
-          title: `New ${l.type.toUpperCase()}`,
-          message: `${l.customerName} requested ${l.selectedPlan || 'service'}`,
-          time: l.createdAt,
-          read: false
-        }));
-      setAdminNotifications(newNotifications);
+      const fetchAdminNotifications = async () => {
+        try {
+          const { customerApi } = await import('./services/customerApi');
+          const leads = await customerApi.getLeads();
+          const newNotifications = leads
+            .filter((l: any) => l.status === 'new')
+            .map((l: any) => ({
+              id: l.id,
+              type: 'lead',
+              title: `New ${l.type.toUpperCase()}`,
+              message: `${l.customerName} requested ${l.selectedPlan || 'service'}`,
+              time: l.createdAt,
+              read: false
+            }));
+          setAdminNotifications(newNotifications);
+        } catch (e) {
+          console.error('Failed to fetch admin notifications', e);
+        }
+      };
+      fetchAdminNotifications();
     }
   }, [isAdmin, currentPage]);
   const [customer, setCustomer] = useState<Customer | null>(null);
