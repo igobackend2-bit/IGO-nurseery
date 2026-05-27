@@ -115,7 +115,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   }, [searchQuery, orders]);
 
   return (
-    <div className="flex min-h-[100dvh] bg-[#f1f5f9] overflow-hidden font-sans w-full">
+    <div className="flex h-[100dvh] bg-[#f1f5f9] overflow-hidden font-sans w-full">
       {/* Sidebar - FIXED to ensure it's always full height */}
       <aside className="w-72 bg-igo-dark flex flex-col shadow-2xl relative z-40 shrink-0 h-screen sticky top-0">
         <div className="p-8 overflow-y-auto flex-1 scrollbar-hide">
@@ -192,9 +192,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative overflow-hidden">
+      <main className="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden">
         {/* Top Header */}
-        <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-10 relative z-30">
+        <header className="h-20 sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-10 z-50 shrink-0">
            <div className="flex items-center gap-8 w-1/2 relative">
               <div className="relative w-full max-w-md group">
                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-igo-lime transition-colors" />
