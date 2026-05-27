@@ -13,6 +13,7 @@ interface AdminOrdersProps {
   onUpdateStatus: (orderId: string, status: Order['status']) => void;
   onDeleteCustomer: (customerId: number) => void;
   onNavigate?: (page: any) => void;
+  initialSearchTerm?: string;
 }
 
 const formatCurrency = (amount: number): string =>
@@ -29,8 +30,9 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
   onUpdateStatus,
   onDeleteCustomer,
   onNavigate,
+  initialSearchTerm,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount-high' | 'above-avg'>('date');
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);

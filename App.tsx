@@ -95,7 +95,7 @@ const buildPath = (
     case Page.OrderHistory:
       return '/order-history';
     case Page.AdminOrders:
-      return '/admin-orders';
+      return productSlug ? `/admin-orders/${encodeURIComponent(productSlug)}` : '/admin-orders';
     case Page.AdminLeads:
       return productSlug ? `/admin-leads/${productSlug}` : '/admin-leads';
     case Page.AddProduct:
@@ -921,6 +921,7 @@ const App: React.FC = () => {
             case Page.AdminOrders:
               return (
                 <AdminOrders
+                  initialSearchTerm={productSlug || ''}
                   orders={orders}
                   onBack={() => navigateTo('/')}
                   onOpenOrder={handleOpenOrder}
@@ -937,9 +938,7 @@ const App: React.FC = () => {
                   orders={orders} 
                   onDeleteCustomer={handleDeleteCustomer} 
                   onNavigateToOrders={(email) => {
-                    // Custom logic to navigate to orders and filter by this email could be implemented,
-                    // but for now we route back to orders. The admin can use the search bar.
-                    handlePageChange(Page.AdminOrders);
+                    handlePageChange(Page.AdminOrders, email);
                   }}
                 />
               );

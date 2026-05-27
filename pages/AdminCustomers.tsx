@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Search, AlertCircle, Filter, Trash2, Mail, Phone, MapPin, Download, FileText, FileSpreadsheet, X as CloseIcon, Calendar, Package } from 'lucide-react';
 import { Order } from '../types';
 import * as XLSX from 'xlsx';
@@ -21,6 +21,20 @@ interface AdminCustomersProps {
 const AdminCustomers: React.FC<AdminCustomersProps> = ({ orders, onDeleteCustomer, onNavigateToOrders }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [leads, setLeads] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const { customerApi } = await import('../services/customerApi');
+        const dbLeads = await customerApi.getLeads();
+        setLeads(dbLeads);
+      } catch (e) {
+        console.error('Failed to fetch leads in AdminCustomers', e);
+      }
+    };
+    fetchLeads();
+  }, []);
 
   const globalCustomers = useMemo(() => {
     const customerMap = new Map<
@@ -403,6 +417,44 @@ const AdminCustomers: React.FC<AdminCustomersProps> = ({ orders, onDeleteCustome
                     <p className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4">
                       + {selectedCustomer.orderCount - 3} more orders
                     </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Leads & Inquiries History Preview */}
+              <div>
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Leads & Inquiry History</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {leads
+                    .filter((l: any) => l.customerEmail === selectedCustomer.email)
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((lead: any) => (
+                      <div key={lead.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-indigo-300 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 text-xs font-black">
+                            {lead.type.toUpperCase()}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {new Date(lead.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                            lead.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                            lead.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {lead.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  {leads.filter((l: any) => l.customerEmail === selectedCustomer.email).length === 0 && (
+                    <p className="text-sm text-igo-muted p-2">No inquiries found for this customer.</p>
                   )}
                 </div>
               </div>
