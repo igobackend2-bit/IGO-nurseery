@@ -762,11 +762,7 @@ const MainApp: React.FC = () => {
         estimatedDelivery: localOrder.estimatedDelivery,
         total: localOrder.total,
         lastFour: localOrder.lastFour,
-        items: localOrder.items.map((item) => ({
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.product.price,
-        })),
+        items: cartItems.map((item) => ({ name: item.product.name, quantity: item.quantity, price: item.product.price, image: item.product.image })),
       };
 
       Promise.allSettled([

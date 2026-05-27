@@ -11,7 +11,7 @@ export interface EmailData {
   customerName: string;
   estimatedDelivery: string;
   total: number;
-  items: Array<{ name: string; quantity: number; price: number }>;
+  items: Array<{ name: string; quantity: number; price: number; image?: string }>;
 }
 
 export interface EmailSendResult {
@@ -94,14 +94,16 @@ const orderTracker = (activeStep: number) => {
   return html;
 };
 
-const productList = (items: Array<{ name: string; quantity: number; price: number }>) =>
+const productList = (items: Array<{ name: string; quantity: number; price: number; image?: string }>) =>
   items.map(item => `
   <div style="display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid #f0f0f0;">
-    <div style="width:70px;height:70px;border-radius:10px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">🌿</div>
-    <div>
-      <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">${item.name}</div>
-      <div style="font-size:12px;color:#888;margin-bottom:6px;">Qty: ${item.quantity}</div>
-      <div style="font-size:14px;font-weight:700;color:#2d7a2d;">${INR(item.price * item.quantity)}</div>
+    <div style="width:70px;height:70px;border-radius:10px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.05);">
+      ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;" />` : `<span style="font-size:30px;">🌿</span>`}
+    </div>
+    <div style="flex-grow:1;">
+      <div style="font-size:15px;font-weight:700;color:#1c1917;margin-bottom:4px;">${item.name}</div>
+      <div style="font-size:13px;color:#78716c;margin-bottom:6px;">Qty: ${item.quantity}</div>
+      <div style="font-size:15px;font-weight:800;color:#2d7a2d;">${INR(item.price * item.quantity)}</div>
     </div>
   </div>`).join('');
 

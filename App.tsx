@@ -276,11 +276,12 @@ const parseLocationToRoute = (): ParsedRoute => {
   }
 
   if (first === 'customer-profile' || first === 'account' || first === 'profile') {
+    const param = segments[1] ? segments[1] : null;
     return {
       page: Page.CustomerProfile,
-      productSlug: null,
+      productSlug: param,
       knowledgeArticleId: null,
-      canonicalPath: '/customer-profile',
+      canonicalPath: param ? `/customer-profile/${param}` : '/customer-profile',
     };
   }
 
@@ -679,7 +680,7 @@ const App: React.FC = () => {
         customerName: `${orderData.firstName} ${orderData.lastName}`,
         estimatedDelivery,
         total,
-        items: cartItems.map(item => ({ name: item.product.name, quantity: item.quantity, price: item.product.price })),
+        items: cartItems.map(item => ({ name: item.product.name, quantity: item.quantity, price: item.product.price, image: item.product.image })),
       };
 
     Promise.allSettled([
