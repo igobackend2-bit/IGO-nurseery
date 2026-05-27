@@ -69,7 +69,7 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
   // Sync with URL changes
   React.useEffect(() => {
-    // 1. Detect query params for deep-linking (e.g., inbox?id=lead-123)
+    // 1. Detect query params for deep-linking (e.g., inbox?id=lead-123 or orders?id=IGO-123)
     if (initialTab && (initialTab.includes('inbox?id=') || initialTab.includes('inbox%3Fid%3D'))) {
       const decoded = decodeURIComponent(initialTab);
       const parts = decoded.split('?id=');
@@ -78,8 +78,15 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
         // Slight delay to ensure loadLeads has processed
         setTimeout(() => setActiveLeadId(parts[1]), 100);
       }
+    } else if (initialTab && (initialTab.includes('orders?id=') || initialTab.includes('orders%3Fid%3D'))) {
+      const decoded = decodeURIComponent(initialTab);
+      const parts = decoded.split('?id=');
+      setActiveTab('orders');
+      if (parts[1]) {
+        setTimeout(() => setSelectedOrderId(parts[1]), 100);
+      }
     } else if (initialTab && initialTab !== activeTab) {
-      setActiveTab(initialTab);
+      setActiveTab(initialTab as TabType);
     }
   }, [initialTab]);
 

@@ -210,14 +210,17 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                                 
                                 // 2. Intelligent Redirection
                                 if (note.targetPage === 'customer-profile') {
-                                  const target = note.targetId && note.targetId !== 'inbox' && note.targetId !== 'orders'
-                                    ? `inbox?id=${note.targetId}`
-                                    : (note.targetId || 'inbox');
+                                  let target = note.targetId || 'inbox';
+                                  if (note.type === 'order' && note.targetId) {
+                                    target = `orders?id=${note.targetId}`;
+                                  } else if (note.targetId && note.targetId !== 'inbox' && note.targetId !== 'orders') {
+                                    target = `inbox?id=${note.targetId}`;
+                                  }
                                   handleNav(Page.CustomerProfile, target);
                                 } else if (note.targetPage) {
                                   handleNav(note.targetPage as any, note.targetId);
                                 } else if (note.type === 'order' || note.message.toLowerCase().includes('order')) {
-                                  handleNav(Page.CustomerProfile, 'orders');
+                                  handleNav(Page.CustomerProfile, note.targetId ? `orders?id=${note.targetId}` : 'orders');
                                 } else {
                                   handleNav(Page.CustomerProfile, 'inbox');
                                 }

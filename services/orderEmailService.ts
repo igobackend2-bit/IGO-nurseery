@@ -342,19 +342,22 @@ const sendEmail = async (to: string, subject: string, html: string, fallbackData
   } catch (err) {
     console.error('[sendEmail] Vercel API failed, trying PHP fallback:', err);
     
-    if (fallbackData) {
+    if (fallbackData || html) {
       try {
         const phpRes = await fetch('/mailer.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             secret: 'igo_nursery_secret_key_2026',
+            to: to,
+            subject: subject,
+            html: html,
             ...fallbackData
           })
         });
         if (phpRes.ok) {
            persistEmailLog(to, subject, html);
-           return { success: true, mode: 'api', message: 'Email sent via PHP mailer (Hostinger fallback).' };
+           return { success: true, mode: 'api', message: 'Email sent via PHP mailer (Resend API via cURL).' };
         }
       } catch (phpErr) {
         console.error('[sendEmail] PHP fallback also failed:', phpErr);
