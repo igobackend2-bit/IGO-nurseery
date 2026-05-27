@@ -34,11 +34,12 @@ import { sendLeadUpdateEmail } from '../services/orderEmailService';
 interface AdminLeadsProps {
   onNavigate?: (page: Page, param?: string) => void;
   leadId?: string | null;
+  initialFilter?: 'all' | 'consultation' | 'inspection' | 'lab-audit' | 'payment-notification' | 'deletion-request' | 'general-inquiry';
 }
 
-const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId }) => {
+const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilter }) => {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [filter, setFilter] = useState<'all' | 'consultation' | 'inspection' | 'lab-audit' | 'payment-notification' | 'deletion-request' | 'general-inquiry'>('all');
+  const [filter, setFilter] = useState<'all' | 'consultation' | 'inspection' | 'lab-audit' | 'payment-notification' | 'deletion-request' | 'general-inquiry'>(initialFilter || 'all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [adminMessage, setAdminMessage] = useState('');

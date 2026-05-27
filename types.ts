@@ -22,6 +22,7 @@ export enum Page {
   OrderHistory = 'order-history',
   AdminOrders = 'admin-orders',
   AdminLeads = 'admin-leads',
+  AdminVisitorLeads = 'admin-visitor-leads',
   AdminProducts = 'admin-products',
   AdminOverview = 'admin-overview',
   AdminCustomers = 'admin-customers',

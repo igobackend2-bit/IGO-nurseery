@@ -21,7 +21,8 @@ import {
   ShoppingBag,
   ExternalLink,
   MessageSquare,
-  Star
+  Star,
+  Megaphone
 } from 'lucide-react';
 import { Page, Order } from '../types';
 
@@ -65,6 +66,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: Page.AdminOrders, label: 'All Orders', icon: Package },
     { id: Page.AdminCustomers, label: 'All CX (Customers)', icon: User },
     { id: Page.AdminLeads, label: 'CRM Inquiries', icon: Users },
+    { id: Page.AdminVisitorLeads, label: 'Popup / Visitor Leads', icon: Megaphone },
     { id: Page.AdminProducts, label: 'Products', icon: Package },
     { id: Page.AdminInventory, label: 'Stock & Remove', icon: ShoppingBag },
     { id: Page.AddProduct, label: 'Add New Product', icon: PlusCircle },

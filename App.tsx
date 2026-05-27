@@ -98,6 +98,8 @@ const buildPath = (
       return productSlug ? `/admin-orders/${encodeURIComponent(productSlug)}` : '/admin-orders';
     case Page.AdminLeads:
       return productSlug ? `/admin-leads/${productSlug}` : '/admin-leads';
+    case Page.AdminVisitorLeads:
+      return '/admin-visitor-leads';
     case Page.AddProduct:
       return '/add-product';
     case Page.About:
@@ -231,12 +233,20 @@ const parseLocationToRoute = (): ParsedRoute => {
   }
 
   if (first === 'admin-leads') {
-    const leadId = segments[1] ? segments[1] : null;
     return {
       page: Page.AdminLeads,
-      productSlug: leadId,
+      productSlug: segments[1] || null,
       knowledgeArticleId: null,
-      canonicalPath: leadId ? `/admin-leads/${leadId}` : '/admin-leads',
+      canonicalPath: segments[1] ? `/admin-leads/${segments[1]}` : '/admin-leads',
+    };
+  }
+
+  if (first === 'admin-visitor-leads') {
+    return {
+      page: Page.AdminVisitorLeads,
+      productSlug: null,
+      knowledgeArticleId: null,
+      canonicalPath: '/admin-visitor-leads',
     };
   }
 
@@ -901,6 +911,7 @@ const App: React.FC = () => {
       case Page.AdminOrders:
       case Page.AdminCustomers:
       case Page.AdminLeads:
+      case Page.AdminVisitorLeads:
       case Page.AdminProducts:
       case Page.AdminInventory:
       case Page.AdminOverview:
@@ -931,7 +942,9 @@ const App: React.FC = () => {
                 />
               );
             case Page.AdminLeads:
-              return <AdminLeads onNavigate={(page) => handlePageChange(page)} leadId={productSlug || undefined} />;
+              return <AdminLeads onNavigate={handlePageChange} leadId={productSlug || undefined} />;
+            case Page.AdminVisitorLeads:
+              return <AdminLeads onNavigate={handlePageChange} initialFilter="general-inquiry" />;
             case Page.AdminCustomers:
               return (
                 <AdminCustomers 
