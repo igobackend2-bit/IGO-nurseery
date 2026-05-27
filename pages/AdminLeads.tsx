@@ -339,19 +339,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId }) => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
             <div className="absolute inset-0 bg-igo-dark/80 backdrop-blur-md animate-in fade-in duration-300" onClick={handleCloseModal}></div>
             
-            {/* Independent Close Button Layer - Moved OUTSIDE the overflow container so it is always clickable */}
-            <button 
-              onClick={(e) => {
-                console.log('AdminLeads: Force Closing Modal');
-                e.preventDefault();
-                e.stopPropagation();
-                handleCloseModal();
-              }} 
-              className="absolute top-4 right-4 md:top-8 md:right-8 p-4 bg-igo-dark text-white rounded-full hover:bg-red-500 hover:text-white transition-all shadow-2xl z-[200] group active:scale-90 border-4 border-white cursor-pointer"
-              title="Force Close Portal (Esc)"
-            >
-                <X className="w-8 h-8 group-hover:rotate-90 transition-transform duration-300" />
-            </button>
+
 
             <div className="bg-white w-full max-w-5xl h-[85vh] rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in zoom-in slide-in-from-bottom-8 duration-500">
                 {/* Modal Header */}
@@ -368,6 +356,13 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId }) => {
                             <h3 className="text-3xl font-black text-igo-dark uppercase tracking-tighter">{selectedLead.customerName}</h3>
                         </div>
                     </div>
+                    <button 
+                        onClick={handleCloseModal}
+                        className="p-3 bg-white border-2 border-gray-100 text-gray-400 rounded-full hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all cursor-pointer shadow-sm group"
+                        title="Close (Esc)"
+                    >
+                        <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
                 </div>
 
                 <div className="flex-grow flex overflow-hidden">

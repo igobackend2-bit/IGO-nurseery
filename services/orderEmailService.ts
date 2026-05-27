@@ -42,8 +42,9 @@ ${content}
 const emailHeader = (emoji: string, title: string, subtitle: string) => `
 <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
   <div style="background:linear-gradient(135deg,#2d7a2d 0%,#4caf50 100%);padding:36px 40px;text-align:center;">
-    <div style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:1px;">🌿 IGO NURSERY</div>
-    <div style="font-size:13px;color:#c8e6c9;margin-top:4px;letter-spacing:2px;text-transform:uppercase;">Grow with Nature</div>
+    <img src="https://igonursery.com/images/branding/igo-logo.jpg" alt="IGO Nursery Logo" style="width:70px;height:70px;border-radius:50%;margin-bottom:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
+    <div style="font-size:24px;font-weight:900;color:#ffffff;letter-spacing:1px;text-transform:uppercase;">IGO NURSERY</div>
+    <div style="font-size:13px;color:#c8e6c9;margin-top:4px;letter-spacing:2px;text-transform:uppercase;font-weight:600;">Grow with Nature</div>
   </div>
   <div style="background:#1b5e20;padding:20px 40px;text-align:center;">
     <h1 style="font-size:26px;font-weight:800;color:#ffffff;margin:0;">${emoji} ${title}</h1>
