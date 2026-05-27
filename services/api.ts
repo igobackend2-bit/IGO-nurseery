@@ -206,9 +206,8 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
       console.log(`🚫 Email skipped for ${customerEmail} because they turned off notifications.`);
     }
 
-    // Push in-app notification stored in Supabase (cross-browser)
     if (customerId) {
-      await supabase.from('notifications').insert({
+      const notifPayload = {
         customer_id: customerId,
         title: `Order ${orderNumber} — ${status.charAt(0).toUpperCase() + status.slice(1)}`,
         message: getStatusMessage(status, orderNumber),
@@ -216,7 +215,22 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
         target_page: 'customer-profile',
         target_id: orderNumber,
         is_read: false
-      }).then(({ error }) => { if (error) console.error('Notification insert failed:', error.message); });
+      };
+      const { error } = await supabase.from('notifications').insert(notifPayload);
+      
+      // Fallback if the notifications table in Supabase doesn't have the new columns yet
+      if (error && error.code === 'PGRST204') {
+        await supabase.from('notifications').insert({
+          customer_id: customerId,
+          title: notifPayload.title,
+          message: notifPayload.message,
+          is_read: false
+        }).then(({ error: fallbackErr }) => { 
+          if (fallbackErr) console.error('Minimal Notification insert failed:', fallbackErr.message); 
+        });
+      } else if (error) {
+        console.error('Notification insert failed:', error.message);
+      }
     }
   } catch (e) {
     console.error('Failed to send status update:', e);

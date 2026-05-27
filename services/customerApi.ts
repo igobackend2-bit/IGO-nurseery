@@ -93,15 +93,31 @@ export const customerApi = {
         if (!data?.id) { console.warn('No customer found for email:', customerIdentifier); return; }
         customerId = data.id;
       }
-      const { error } = await supabase.from('notifications').insert({
+      const notifPayload = {
         customer_id: customerId,
         title,
         message,
         type,
         target_page: targetPage || null,
         target_id: targetId || null,
-      });
-      if (error) console.error('Failed to push notification:', error.message);
+        is_read: false
+      };
+      
+      const { error } = await supabase.from('notifications').insert(notifPayload);
+
+      if (error && error.code === 'PGRST204') {
+        // Fallback for missing columns in the DB schema
+        await supabase.from('notifications').insert({
+          customer_id: customerId,
+          title: notifPayload.title,
+          message: notifPayload.message,
+          is_read: false
+        }).then(({ error: fallbackErr }) => {
+          if (fallbackErr) console.error('Failed to push minimal notification:', fallbackErr.message);
+        });
+      } else if (error) {
+        console.error('Failed to push notification:', error.message);
+      }
     } catch (e) {
       console.error('Failed to push notification:', e);
     }
