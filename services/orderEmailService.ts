@@ -54,8 +54,8 @@ const emailFooter = () => `
   <div style="background:#f9fdf9;padding:28px 40px;text-align:center;border-top:1px solid #e8f5e9;">
     <div style="margin-bottom:14px;">
       <a href="https://www.instagram.com/igoagritechfarms/" style="display:inline-block;margin:0 6px;font-size:12px;color:#4caf50;text-decoration:none;border:1px solid #c8e6c9;border-radius:20px;padding:4px 14px;">Instagram</a>
-      <a href="https://facebook.com" style="display:inline-block;margin:0 6px;font-size:12px;color:#4caf50;text-decoration:none;border:1px solid #c8e6c9;border-radius:20px;padding:4px 14px;">Facebook</a>
-      <a href="https://wa.me/919876543210" style="display:inline-block;margin:0 6px;font-size:12px;color:#4caf50;text-decoration:none;border:1px solid #c8e6c9;border-radius:20px;padding:4px 14px;">WhatsApp</a>
+      <a href="https://www.facebook.com/IGOAgriTechfarms/" style="display:inline-block;margin:0 6px;font-size:12px;color:#4caf50;text-decoration:none;border:1px solid #c8e6c9;border-radius:20px;padding:4px 14px;">Facebook</a>
+      <a href="https://wa.me/919444444444" style="display:inline-block;margin:0 6px;font-size:12px;color:#4caf50;text-decoration:none;border:1px solid #c8e6c9;border-radius:20px;padding:4px 14px;">WhatsApp</a>
     </div>
     <p style="font-size:12px;color:#aaa;line-height:1.8;margin:0;">
       © ${new Date().getFullYear()} IGO Nursery. All rights reserved.<br/>
@@ -77,7 +77,7 @@ const infoBox = (rows: Array<[string, string]>) => `
 </div>`;
 
 const orderTracker = (activeStep: number) => {
-  const steps = ['Confirmed', 'Packed', 'Shipped', 'Delivered'];
+  const steps = ['Confirmed', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'];
   let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;">`;
   steps.forEach((step, i) => {
     const done = i <= activeStep;

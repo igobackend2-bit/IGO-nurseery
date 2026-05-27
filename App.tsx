@@ -591,7 +591,7 @@ const App: React.FC = () => {
       showToast(`Product ${newProduct.name} successfully added to store!`, 'success');
       navigateTo('/admin-inventory');
     } else {
-      showToast(`Failed: ${error}`, 'error');
+      showToast(`Failed: ${error}`, 'info');
     }
   };
 
@@ -610,7 +610,7 @@ const App: React.FC = () => {
     // Calculate order totals
     const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
     const tax = subtotal * 0.05; // 5% tax
-    const deliveryCharge = 50; // Fixed delivery charge
+    const deliveryCharge = subtotal > 500 ? 0 : 50; // Free delivery on orders above ₹500
     const total = subtotal + tax + deliveryCharge;
     
     // Create date strings
@@ -905,7 +905,6 @@ const App: React.FC = () => {
       case Page.AdminNotifications:
       case Page.AdminProfile:
       case Page.MailHub:
-      case Page.AddProduct:
         if (!isAdmin) {
           return (
             <AdminLogin 

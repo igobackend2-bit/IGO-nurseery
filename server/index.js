@@ -99,7 +99,7 @@ function emailFooter() {
     <div style="margin-bottom:14px;">
       <a href="https://www.instagram.com/igoagritechfarms/" style="display:inline-block;margin:0 6px;background:#e1306c;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;">Instagram</a>
       <a href="https://www.facebook.com/IGOAgriTechfarms/" style="display:inline-block;margin:0 6px;background:#1877F2;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;">Facebook</a>
-      <a href="https://wa.me/919999999999" style="display:inline-block;margin:0 6px;background:#25D366;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;">WhatsApp</a>
+      <a href="https://wa.me/919444444444" style="display:inline-block;margin:0 6px;background:#25D366;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;">WhatsApp</a>
     </div>
     <div style="font-size:11px;color:#bbb;line-height:1.9;">
       © ${new Date().getFullYear()} IGO Nursery. All rights reserved.<br/>
@@ -212,7 +212,7 @@ function buildOrderConfirmEmail({ customerName, orderId, orderDate, paymentMetho
     <tr><td style="padding:0 40px 28px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #eee;border-radius:12px;">
         <tr><td style="padding:8px 16px;font-size:13px;color:#666;">Subtotal</td><td style="padding:8px 16px;font-size:13px;color:#333;text-align:right;">₹${subtotal || '—'}</td></tr>
-        <tr><td style="padding:8px 16px;font-size:13px;color:#666;">IGST (18%)</td><td style="padding:8px 16px;font-size:13px;color:#333;text-align:right;">₹${tax || '—'}</td></tr>
+        <tr><td style="padding:8px 16px;font-size:13px;color:#666;">Tax (5%)</td><td style="padding:8px 16px;font-size:13px;color:#333;text-align:right;">₹${tax || '—'}</td></tr>
         <tr><td style="padding:8px 16px;font-size:13px;color:#666;">Shipping</td><td style="padding:8px 16px;font-size:13px;color:${G};font-weight:700;text-align:right;">${shipping || 'FREE'}</td></tr>
         ${discount ? `<tr><td style="padding:8px 16px;font-size:13px;color:#666;">Discount</td><td style="padding:8px 16px;font-size:13px;color:#e53935;text-align:right;">−₹${discount}</td></tr>` : ''}
         <tr style="border-top:2px solid #e0f0e0;"><td style="padding:12px 16px;font-size:15px;font-weight:800;color:#1a1a1a;">Grand Total</td><td style="padding:12px 16px;font-size:16px;font-weight:900;color:${DG};text-align:right;">₹${total}</td></tr>
