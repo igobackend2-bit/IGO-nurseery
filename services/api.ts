@@ -160,21 +160,39 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     // and also to ensure we have their customerId for the in-app notification
     if (customerEmail) {
       const { supabase } = await import('./supabaseClient');
-      const { data: customerRow } = await supabase
-        .from('customers')
-        .select('id, email_notifications')
-        .eq('email', customerEmail)
-        .maybeSingle();
+      // Attempt to fetch email_notifications, but fall back to just id if column doesn't exist
+      try {
+        const { data: customerRow, error } = await supabase
+          .from('customers')
+          .select('id, email_notifications')
+          .eq('email', customerEmail)
+          .maybeSingle();
 
-      if (customerRow) {
-        if (!customerId && customerRow.id) {
-           customerId = customerRow.id;
-           // Backfill the order row so future updates work immediately
-           await supabase.from('orders').update({ customer_id: customerId }).eq('order_number', orderNumber);
+        if (!error && customerRow) {
+          if (!customerId && customerRow.id) {
+             customerId = customerRow.id;
+             await supabase.from('orders').update({ customer_id: customerId }).eq('order_number', orderNumber);
+          }
+          if (customerRow.email_notifications === false) {
+             emailNotificationsEnabled = false;
+          }
+        } else if (error) {
+          // Fallback if email_notifications column does not exist
+          const { data: fallbackRow } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('email', customerEmail)
+            .maybeSingle();
+            
+          if (fallbackRow) {
+            if (!customerId && fallbackRow.id) {
+               customerId = fallbackRow.id;
+               await supabase.from('orders').update({ customer_id: customerId }).eq('order_number', orderNumber);
+            }
+          }
         }
-        if (customerRow.email_notifications === false) {
-           emailNotificationsEnabled = false;
-        }
+      } catch (err) {
+        console.warn('Could not check email preferences:', err);
       }
     }
 
