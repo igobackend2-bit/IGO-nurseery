@@ -64,19 +64,41 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  // SEO-friendly path map — used for href on all anchor links
+  const PAGE_PATHS: Partial<Record<Page, string>> = {
+    [Page.Home]: '/',
+    [Page.Shop]: '/store',
+    [Page.Product]: '/product',
+    [Page.Landscape]: '/landscape',
+    [Page.AMC]: '/amc',
+    [Page.Lab]: '/lab',
+    [Page.Knowledge]: '/knowledge',
+    [Page.Assistant]: '/assistant',
+    [Page.Visit]: '/visit',
+    [Page.Cart]: '/cart',
+    [Page.CustomerAuth]: '/customer-auth',
+    [Page.CustomerProfile]: '/customer-profile',
+  };
+
   const navItems = [
-    { name: 'Store', page: Page.Shop },
-    { name: 'Product', page: Page.Product },
-    { name: 'Landscape Studio', page: Page.Landscape },
-    { name: 'AMC Care', page: Page.AMC },
-    { name: 'Tech Lab', page: Page.Lab },
-    { name: 'Knowledge', page: Page.Knowledge },
+    { name: 'Store', page: Page.Shop, path: '/store' },
+    { name: 'Product', page: Page.Product, path: '/product' },
+    { name: 'Landscape Studio', page: Page.Landscape, path: '/landscape' },
+    { name: 'AMC Care', page: Page.AMC, path: '/amc' },
+    { name: 'Tech Lab', page: Page.Lab, path: '/lab' },
+    { name: 'Knowledge', page: Page.Knowledge, path: '/knowledge' },
   ];
 
   const handleNav = (page: Page, param?: string) => {
     setCurrentPage(page, param);
     setIsMenuOpen(false);
     setIsSearchOpen(false);
+  };
+
+  // SPA-friendly anchor click handler — allows Googlebot to see href, prevents full reload
+  const handleAnchorNav = (e: React.MouseEvent<HTMLAnchorElement>, page: Page, param?: string) => {
+    e.preventDefault();
+    handleNav(page, param);
   };
 
   const handleSearch = (query: string) => {
@@ -106,31 +128,32 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-24 gap-4 xl:gap-8">
-            <div className="flex items-center gap-4 cursor-pointer group py-2 shrink-0" onClick={() => handleNav(Page.Home)}>
+            <a href="/" onClick={(e) => handleAnchorNav(e, Page.Home)} className="flex items-center gap-4 cursor-pointer group py-2 shrink-0" aria-label="IGO Nursery — Home">
               <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-sm border border-gray-100/50 bg-white group-hover:shadow-md transition-all">
                 <img
                   src="/images/branding/igo-logo.jpg"
-                  alt="IGO Agritechfarms"
+                  alt="IGO Nursery logo — premium nursery plants Chennai"
                   className="w-full h-full object-cover scale-[1.35] transition-all duration-300 group-hover:scale-[1.45] group-hover:rotate-3 mix-blend-multiply"
                 />
               </div>
-            </div>
+            </a>
 
-            <nav className="hidden lg:flex flex-1 justify-center items-center gap-x-6 xl:gap-x-10">
+            <nav className="hidden lg:flex flex-1 justify-center items-center gap-x-6 xl:gap-x-10" aria-label="Main navigation">
               {navItems.map((item) => (
-                <button
+                <a
                   key={item.page}
-                  onClick={() => handleNav(item.page)}
-                  className={`text-[12px] xl:text-[13px] uppercase tracking-[0.15em] font-black transition-all hover:text-igo-lime hover:scale-105 relative py-2 ${
+                  href={item.path}
+                  onClick={(e) => handleAnchorNav(e, item.page)}
+                  aria-current={currentPage === item.page ? 'page' : undefined}
+                  className={`text-[12px] xl:text-[13px] uppercase tracking-[0.15em] font-black transition-all hover:text-igo-lime hover:scale-105 relative py-2 no-underline ${
                     currentPage === item.page
                       ? 'text-igo-dark after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-igo-lime'
                       : 'text-igo-muted'
                   }`}
                 >
                   {item.name}
-                </button>
+                </a>
               ))}
-
             </nav>
 
             <div className="flex items-center gap-1.5 xl:gap-2 shrink-0">
@@ -144,23 +167,25 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                 <Search className="w-5 h-5" />
               </button>
 
-              <button
-                onClick={() => handleNav(Page.Assistant)}
-                className="bg-igo-dark text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-igo-charcoal transition-all shadow-lg hidden md:flex items-center gap-2"
+              <a
+                href="/assistant"
+                onClick={(e) => handleAnchorNav(e, Page.Assistant)}
+                className="bg-igo-dark text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-igo-charcoal transition-all shadow-lg hidden md:flex items-center gap-2 no-underline"
               >
                 <Zap className="w-3.5 h-3.5 text-igo-lime" />
                 AI Assistant
-              </button>
+              </a>
 
 
 
               <div className="relative ml-2">
-                <button
-                  onClick={() => handleNav(Page.Cart)}
-                  className={`p-2.5 rounded-xl transition-colors ${
+                <a
+                  href="/cart"
+                  onClick={(e) => handleAnchorNav(e, Page.Cart)}
+                  className={`p-2.5 rounded-xl transition-colors inline-flex no-underline ${
                     currentPage === Page.Cart ? 'bg-igo-dark text-white' : 'text-igo-dark hover:bg-gray-50'
                   }`}
-                  aria-label="Open shopping cart"
+                  aria-label={`Open shopping cart${cartCount > 0 ? ` — ${cartCount} items` : ''}`}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {cartCount > 0 && (
@@ -168,7 +193,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                       {cartCount}
                     </span>
                   )}
-                </button>
+                </a>
               </div>
 
               {/* Customer Notifications Bell - Always visible for accessibility */}
@@ -277,23 +302,25 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
               <div className="relative ml-2">
                 {customer ? (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleNav(Page.CustomerProfile, 'account')}
-                      className="p-2.5 text-igo-dark hover:bg-gray-50 rounded-xl transition-colors relative flex items-center gap-2"
+                    <a
+                      href="/customer-profile/account"
+                      onClick={(e) => handleAnchorNav(e, Page.CustomerProfile, 'account')}
+                      className="p-2.5 text-igo-dark hover:bg-gray-50 rounded-xl transition-colors relative flex items-center gap-2 no-underline"
                       title="My Profile"
                     >
                       <User className="w-5 h-5" />
                       <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block truncate max-w-[100px]">{customer.name}</span>
-                    </button>
+                    </a>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => handleNav(Page.CustomerAuth)}
-                    className="p-2.5 text-igo-dark hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-2 whitespace-nowrap"
+                  <a
+                    href="/customer-auth"
+                    onClick={(e) => handleAnchorNav(e, Page.CustomerAuth)}
+                    className="p-2.5 text-igo-dark hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-2 whitespace-nowrap no-underline"
                   >
                     <User className="w-5 h-5" />
                     <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Login</span>
-                  </button>
+                  </a>
                 )}
               </div>
 
@@ -337,29 +364,31 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
             </button>
           </div>
 
-          <nav className="flex-grow space-y-2">
+          <nav className="flex-grow space-y-2" aria-label="Mobile navigation">
             {navItems.map((item) => (
-              <button
+              <a
                 key={item.page}
-                onClick={() => handleNav(item.page)}
-                className="w-full flex items-center justify-between p-4 rounded-2xl text-left font-bold text-igo-dark hover:bg-igo-lime hover:text-white transition-all group"
+                href={item.path}
+                onClick={(e) => handleAnchorNav(e, item.page)}
+                className="w-full flex items-center justify-between p-4 rounded-2xl text-left font-bold text-igo-dark hover:bg-igo-lime hover:text-white transition-all group no-underline"
               >
                 <span className="uppercase tracking-widest text-sm">{item.name}</span>
                 <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
+              </a>
             ))}
 
             <div className="border-t my-6" />
 
 
 
-            <button
-              onClick={() => handleNav(Page.Assistant)}
-              className="w-full flex items-center gap-3 p-4 rounded-2xl bg-igo-dark text-white font-bold mt-4 shadow-xl"
+            <a
+              href="/assistant"
+              onClick={(e) => handleAnchorNav(e, Page.Assistant)}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl bg-igo-dark text-white font-bold mt-4 shadow-xl no-underline"
             >
               <Zap className="w-4 h-4 text-igo-lime" />
               <span className="uppercase tracking-widest text-sm">Garden Assistant</span>
-            </button>
+            </a>
           </nav>
 
           <div className="border-t pt-8 space-y-4">
@@ -377,12 +406,13 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
 
             <div className="text-[10px] font-black text-igo-muted uppercase tracking-[0.2em] mb-4">Muttukadu Headquarters</div>
             <p className="text-sm text-gray-500 mb-6">ECR Road, Muttukadu, Chennai 603112</p>
-            <button
-              onClick={() => handleNav(Page.Visit)}
-              className="text-igo-dark font-black uppercase text-xs tracking-widest border-b-2 border-igo-lime pb-1"
+            <a
+              href="/visit"
+              onClick={(e) => handleAnchorNav(e, Page.Visit)}
+              className="text-igo-dark font-black uppercase text-xs tracking-widest border-b-2 border-igo-lime pb-1 no-underline"
             >
               Book Campus Visit
-            </button>
+            </a>
           </div>
         </div>
       </div>

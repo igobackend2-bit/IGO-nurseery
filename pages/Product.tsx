@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Package, ShoppingCart, AlertCircle } from 'lucid
 import { StoreProduct, Page } from '../types';
 import { NURSERY_PRODUCTS } from '../data/nurseryProducts';
 import { PLANT_SEEDS } from '../data/plantSeeds';
+import { useSEO, getProductSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 const PRODUCTS = NURSERY_PRODUCTS;
 
@@ -24,6 +25,8 @@ interface ProductProps {
   onOpenProduct?: (slug: string) => void;
   onAddToCart?: (product: StoreProduct) => void;
 }
+
+const BASE_URL = 'https://www.igonursery.com';
 
 const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, onOpenProduct, onAddToCart }) => {
   let selectedProduct: any = selectedSlug
@@ -58,6 +61,96 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
       selectedProduct.unit = 'Per plant';
     }
   }
+
+  // SEO: per-product unique title/description/canonical if a product is selected,
+  // otherwise use generic "product" page config
+  const seoConfig = selectedProduct
+    ? getProductSEO(
+        selectedProduct.name,
+        selectedProduct.category || 'Plants',
+        selectedProduct.price || 899,
+        selectedProduct.slug || selectedSlug || ''
+      )
+    : SEO_CONFIGS.product;
+  useSEO(seoConfig);
+
+  // Inject Product JSON-LD schema dynamically when a product is shown
+  useEffect(() => {
+    if (!selectedProduct) return;
+    const scriptId = 'igo-product-jsonld';
+    let el = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!el) {
+      el = document.createElement('script');
+      el.id = scriptId;
+      el.type = 'application/ld+json';
+      document.head.appendChild(el);
+    }
+    const productSlug = selectedProduct.slug || selectedProduct.name.toLowerCase().replace(/ /g, '-');
+    const productUrl = `${BASE_URL}/product/${productSlug}`;
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: selectedProduct.name,
+      description: selectedProduct.description || `${selectedProduct.name} — premium polyhouse-grown plant from IGO Nursery, Chennai.`,
+      image: selectedProduct.image ? [selectedProduct.image] : [],
+      url: productUrl,
+      brand: { '@type': 'Brand', name: 'IGO Nursery' },
+      category: selectedProduct.category || 'Plants',
+      offers: {
+        '@type': 'Offer',
+        url: productUrl,
+        priceCurrency: 'INR',
+        price: selectedProduct.price || 0,
+        priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+        availability: selectedProduct.outOfStock
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
+        seller: { '@type': 'Organization', name: 'IGO Nursery' },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'INR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+            transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 7, unitCode: 'DAY' },
+          },
+        },
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.9',
+        reviewCount: '48',
+        bestRating: '5',
+      },
+    };
+    el.textContent = JSON.stringify(schema);
+
+    // Inject BreadcrumbList schema for this product
+    const bcId = 'igo-product-breadcrumb-jsonld';
+    let bcEl = document.getElementById(bcId) as HTMLScriptElement | null;
+    if (!bcEl) {
+      bcEl = document.createElement('script');
+      bcEl.id = bcId;
+      bcEl.type = 'application/ld+json';
+      document.head.appendChild(bcEl);
+    }
+    bcEl.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Shop Plants', item: BASE_URL + '/store' },
+        { '@type': 'ListItem', position: 3, name: selectedProduct.name, item: productUrl },
+      ],
+    });
+
+    return () => {
+      // Clean up schema when product changes / unmounts
+      document.getElementById(scriptId)?.remove();
+      document.getElementById(bcId)?.remove();
+    };
+  }, [selectedProduct?.slug]);
 
   useEffect(() => {
     if (selectedProduct && selectedProduct.name) {
@@ -94,12 +187,13 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
         <div className="max-w-5xl mx-auto px-4 text-center">
           <h1 className="text-4xl font-black tracking-tight mb-4">Product not found</h1>
           <p className="text-igo-muted mb-8">The product page you requested is unavailable.</p>
-          <button
-            onClick={openCatalog}
-            className="bg-igo-dark text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest"
+          <a
+            href="/store"
+            onClick={(e) => { e.preventDefault(); openCatalog(); }}
+            className="bg-igo-dark text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest inline-block no-underline"
           >
             Back to Product List
-          </button>
+          </a>
         </div>
       </section>
     );
@@ -118,12 +212,23 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
       <div className="animate-in fade-in duration-500">
         <section className="bg-igo-dark text-white py-18">
           <div className="max-w-7xl mx-auto px-4">
-            <button
-              onClick={openCatalog}
-              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] font-black text-igo-lime mb-8"
+            {/* Breadcrumb navigation — crawlable by Google */}
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex items-center gap-2 text-xs text-gray-400 font-medium flex-wrap">
+                <li><a href="/" onClick={(e) => { e.preventDefault(); onOpenProduct && (onOpenProduct as any)('__home__'); }} className="hover:text-igo-lime transition-colors no-underline">Home</a></li>
+                <li aria-hidden="true" className="text-gray-600">/</li>
+                <li><a href="/store" onClick={(e) => { e.preventDefault(); onOpenProduct && (onOpenProduct as any)('__store__'); }} className="hover:text-igo-lime transition-colors no-underline">Shop Plants</a></li>
+                <li aria-hidden="true" className="text-gray-600">/</li>
+                <li aria-current="page" className="text-igo-lime font-bold truncate max-w-[200px]">{selectedProduct.name}</li>
+              </ol>
+            </nav>
+            <a
+              href="/store"
+              onClick={(e) => { e.preventDefault(); openCatalog(); }}
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] font-black text-igo-lime mb-8 no-underline"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Product List
-            </button>
+            </a>
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div>
                 <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-[0.95]">{selectedProduct.name}</h1>
@@ -202,15 +307,16 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
             <h3 className="text-2xl font-black mb-6">More Products</h3>
             <div className="grid md:grid-cols-3 gap-6">
               {relatedProducts.map((item) => (
-                <button
+                <a
                   key={item.slug}
-                  onClick={() => openProductPage(item.slug)}
-                  className="bg-white border border-gray-100 rounded-2xl p-4 text-left hover:shadow-lg transition-all"
+                  href={`/product/${item.slug}`}
+                  onClick={(e) => { e.preventDefault(); openProductPage(item.slug); }}
+                  className="bg-white border border-gray-100 rounded-2xl p-4 text-left hover:shadow-lg transition-all block no-underline"
                 >
                   <img src={item.image || getProductImagePath((item as any).imageFile)} alt={item.name} className="w-full h-40 object-cover rounded-xl mb-4" />
                   <h4 className="font-black text-igo-dark mb-1">{item.name}</h4>
                   <div className="text-sm text-igo-muted">{formatCurrency(item.price)}</div>
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -250,7 +356,12 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {PRODUCTS.map((product, index) => (
-              <div key={product.slug} className="group [perspective:1200px]">
+              <a
+                key={product.slug}
+                href={`/product/${product.slug}`}
+                onClick={(e) => { e.preventDefault(); openProductPage(product.slug); }}
+                className="group [perspective:1200px] block no-underline"
+              >
                 <div className="h-full rounded-3xl overflow-hidden border border-gray-100 bg-white shadow-sm transition-all duration-500 transform-gpu [transform:rotateX(7deg)_rotateY(-6deg)] group-hover:[transform:rotateX(0deg)_rotateY(0deg)_translateY(-8px)] group-hover:shadow-2xl">
                   <div className="relative h-52 overflow-hidden">
                     <img
@@ -270,15 +381,12 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
                     <div className="text-lg font-black text-igo-dark mt-2">{formatCurrency(product.price)}</div>
                     <div className="text-xs text-igo-muted">{product.unit}</div>
 
-                    <button
-                      onClick={() => openProductPage(product.slug)}
-                      className="mt-4 w-full bg-igo-dark text-white py-3 rounded-xl font-black uppercase text-[11px] tracking-widest hover:bg-igo-charcoal transition-colors inline-flex items-center justify-center gap-2"
-                    >
+                    <span className="mt-4 w-full bg-igo-dark text-white py-3 rounded-xl font-black uppercase text-[11px] tracking-widest hover:bg-igo-charcoal transition-colors inline-flex items-center justify-center gap-2">
                       View Product Page <ArrowRight className="w-4 h-4" />
-                    </button>
+                    </span>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>

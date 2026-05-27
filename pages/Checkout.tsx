@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart, ArrowLeft, CheckCircle, Truck, CreditCard } from 'lucide-react';
 import { CartItem } from '../types';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 interface CheckoutProps {
   items: CartItem[];
@@ -28,7 +29,9 @@ const formatCurrency = (amount: number): string =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-const Checkout: React.FC<CheckoutProps> = ({ items, onBack, onSubmitOrder }) => {
+const Checkout: React.FC<CheckoutProps> = ({
+  items, onBack, onSubmitOrder }) => {
+  useSEO(SEO_CONFIGS.checkout);
   const [formData, setFormData] = useState<OrderData>({
     firstName: '',
     lastName: '',

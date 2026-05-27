@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { KnowledgeArticle } from '../types';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 interface KnowledgeHubProps {
   articles: KnowledgeArticle[];
@@ -8,6 +9,7 @@ interface KnowledgeHubProps {
 }
 
 const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ articles, onOpenArticle }) => {
+  useSEO(SEO_CONFIGS.knowledge);
   return (
     <div className="bg-gray-50 min-h-screen">
       <section className="bg-white border-b border-gray-100 py-16">

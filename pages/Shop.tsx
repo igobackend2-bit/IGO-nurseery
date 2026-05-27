@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, ShoppingBag, Star, ShieldCheck, Truck, RotateCcw, AlertCircle } from 'lucide-react';
 import { Product, StoreProduct } from '../types';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 // Plant data imported from centralised file below
 
@@ -51,6 +52,9 @@ interface ShopProps {
 }
 
 const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
+  // SEO: Unique title, meta description, and canonical for /store page
+  useSEO(SEO_CONFIGS.store);
+
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -81,6 +85,23 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
 
   return (
     <div className="bg-white min-h-screen">
+      {/* SEO H1 — visually styled but semantically correct for Google */}
+      <div className="bg-white border-b border-gray-100 px-4 py-6">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl md:text-3xl font-black text-igo-dark tracking-tight">
+            Buy Plants Online India — {(products || []).filter(p => !p.isArchived).length}+ Premium Nursery Plants
+          </h1>
+          <p className="text-sm text-gray-500 mt-1 font-medium">Polyhouse-grown at Muttukadu, Chennai · Free pan-India delivery · 99.2% health guarantee</p>
+          {/* Breadcrumb navigation */}
+          <nav aria-label="Breadcrumb" className="mt-2">
+            <ol className="flex items-center gap-2 text-xs text-gray-400 font-medium">
+              <li><a href="/" className="hover:text-igo-lime transition-colors no-underline">Home</a></li>
+              <li aria-hidden="true">/</li>
+              <li aria-current="page" className="text-igo-dark font-bold">Shop Plants</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
       <div className="border-b bg-gray-50/50 sticky top-20 z-40 px-4 py-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
@@ -120,12 +141,15 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
           {filteredProducts.map((product) => {
             const isOutOfStock = product.outOfStock || (product.stock !== undefined && product.stock <= 0);
             const isLowStock = !isOutOfStock && product.stock !== undefined && product.stock < 20;
-            
+            const productSlug = product.slug || product.name.toLowerCase().replace(/ /g, '-');
+
             return (
-            <div 
-              key={product.id} 
-              onClick={() => onOpenProduct && onOpenProduct(product.slug || product.name.toLowerCase().replace(/ /g, '-'))}
-              className={`group cursor-pointer ${isOutOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
+            // SEO: Using <a href> instead of <div onClick> so Google can crawl product pages
+            <a
+              key={product.id}
+              href={`/product/${productSlug}`}
+              onClick={(e) => { e.preventDefault(); onOpenProduct && onOpenProduct(productSlug); }}
+              className={`group cursor-pointer block no-underline ${isOutOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
             >
               <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 mb-4">
                 <img
@@ -193,7 +217,7 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
                   {formatCurrency(product.price)}
                 </div>
               </div>
-            </div>
+            </a>
           )})}
         </div>
       </div>

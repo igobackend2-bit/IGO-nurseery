@@ -2,18 +2,28 @@ import React from 'react';
 import { ArrowRight, Zap, Microscope, ShieldCheck, MapPin, ExternalLink, Pickaxe, Cpu, Leaf, Activity } from 'lucide-react';
 import { Page } from '../types';
 import IGOBrandsScroll from '../components/IGOBrandsScroll';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 interface HomeProps {
   onNavigate?: (page: Page, param?: string) => void;
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  // SEO: Set unique title, meta description, and canonical URL for homepage
+  useSEO(SEO_CONFIGS.home);
+
   const handleNavigate = (page: Page, param?: string) => {
     if (onNavigate) {
       onNavigate(page, param);
     } else {
       window.location.hash = page;
     }
+  };
+
+  // SPA-friendly anchor click — keeps href for crawlability, prevents full reload
+  const handleAnchorNav = (e: React.MouseEvent<HTMLAnchorElement>, page: Page, param?: string) => {
+    e.preventDefault();
+    handleNavigate(page, param);
   };
 
   const [activeLegal, setActiveLegal] = React.useState<string | null>(null);
@@ -112,8 +122,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </div>
               
               <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter">
-                <span className="sr-only">Premium Nursery Plants &amp; AgriTech Greenery — IGO Nursery: </span>NATURE <br />
-                <span className="text-gradient">ENGINEERED.</span>
+                {/* Visually styled but clean keyword text for SEO */}
+                <span className="sr-only">Buy Plants Online India — Premium Nursery Plants &amp; AgriTech Greenery | IGO Nursery Chennai</span>
+                <span aria-hidden="true">NATURE <br /><span className="text-gradient">ENGINEERED.</span></span>
               </h1>
               
               <p className="text-xl text-gray-400 font-medium leading-relaxed max-w-lg">
@@ -131,13 +142,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </div>
 
               <div className="flex flex-wrap gap-5 pt-6">
-                <button onClick={() => handleNavigate(Page.Assistant)} className="bg-igo-lime text-igo-dark px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-white hover:scale-105 transition-all flex items-center gap-3 shadow-[0_0_40px_rgba(132,204,22,0.3)]">
+                <a href="/assistant" onClick={(e) => handleAnchorNav(e, Page.Assistant)} className="bg-igo-lime text-igo-dark px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-white hover:scale-105 transition-all flex items-center gap-3 shadow-[0_0_40px_rgba(132,204,22,0.3)] no-underline">
                   Start Garden Assistant
                   <Zap className="w-4 h-4 fill-current" />
-                </button>
-                <button onClick={() => handleNavigate(Page.Shop)} className="bg-white/10 border border-white/20 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-white/20 transition-all">
+                </a>
+                <a href="/store" onClick={(e) => handleAnchorNav(e, Page.Shop)} className="bg-white/10 border border-white/20 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-white/20 transition-all no-underline">
                   Shop Plants
-                </button>
+                </a>
               </div>
             </div>
 
@@ -195,7 +206,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   <div className="w-4 h-1.5 rounded-full" style={{ background: '#c5a03f' }} />
                 </div>
             </div>
-            <button onClick={() => handleNavigate(Page.Landscape)} className="text-xs font-black uppercase tracking-widest text-igo-muted hover:text-igo-dark transition-colors border-b-2 border-transparent hover:border-igo-dark pb-1">View All Case Studies</button>
+            <a href="/landscape" onClick={(e) => handleAnchorNav(e, Page.Landscape)} className="text-xs font-black uppercase tracking-widest text-igo-muted hover:text-igo-dark transition-colors border-b-2 border-transparent hover:border-igo-dark pb-1 no-underline">View All Case Studies</a>
         </div>
 
         <div className="flex gap-8 overflow-x-auto px-4 lg:px-[calc((100vw-80rem)/2)] no-scrollbar pb-10">
@@ -212,7 +223,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     </div>
                     <div className="p-6">
                         <div className="text-[10px] font-bold text-igo-lime uppercase tracking-widest mb-1">{proj.area}</div>
-                        <h4 className="text-lg font-black text-igo-dark">{proj.title}</h4>
+                        <h3 className="text-lg font-black text-igo-dark">{proj.title}</h3>
                     </div>
                 </div>
             ))}
@@ -284,9 +295,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   <h3 className="text-3xl font-black mb-4 tracking-tighter">{card.title}</h3>
                   <p className="text-igo-muted font-medium leading-relaxed mb-8">{card.desc}</p>
                 </div>
-                <button onClick={() => handleNavigate(card.link.includes('product') ? Page.Product : card.link.includes('landscape') ? Page.Landscape : Page.AMC)} className="inline-flex items-center text-igo-dark font-black uppercase text-xs tracking-widest hover:gap-4 transition-all text-left">
+                <a href={card.link.includes('product') ? '/product' : card.link.includes('landscape') ? '/landscape' : '/amc'} onClick={(e) => handleAnchorNav(e, card.link.includes('product') ? Page.Product : card.link.includes('landscape') ? Page.Landscape : Page.AMC)} className="inline-flex items-center text-igo-dark font-black uppercase text-xs tracking-widest hover:gap-4 transition-all text-left no-underline">
                   Explore Service <ArrowRight className="ml-3 w-4 h-4 text-igo-lime" />
-                </button>
+                </a>
               </div>
             </div>
           ))}
@@ -309,12 +320,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <p className="text-gray-300 text-lg mb-8 max-w-xl">
               Explore curated collections, planting essentials, and landscape-ready material in one dedicated product experience.
             </p>
-            <button
-              onClick={() => handleNavigate(Page.Product)}
-              className="bg-igo-lime text-igo-dark px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white transition-colors inline-flex items-center gap-3"
+            <a
+              href="/product"
+              onClick={(e) => handleAnchorNav(e, Page.Product)}
+              className="bg-igo-lime text-igo-dark px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white transition-colors inline-flex items-center gap-3 no-underline"
             >
               Open Product Page <ArrowRight className="w-4 h-4" />
-            </button>
+            </a>
           </div>
           <div className="relative z-10">
             <img
@@ -360,9 +372,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              <button onClick={() => handleNavigate(Page.Lab)} className="text-igo-lime font-black uppercase text-xs tracking-[0.3em] flex items-center gap-4 hover:gap-6 transition-all">
+              <a href="/lab" onClick={(e) => handleAnchorNav(e, Page.Lab)} className="text-igo-lime font-black uppercase text-xs tracking-[0.3em] flex items-center gap-4 hover:gap-6 transition-all no-underline">
                 Enter The Lab <ArrowRight className="w-5 h-5" />
-              </button>
+              </a>
             </div>
 
             <div className="relative">
@@ -426,8 +438,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter">Ready to Build Your <br/><span className="italic font-serif">Living Legacy?</span></h2>
             <p className="text-igo-muted text-xl max-w-2xl mx-auto font-medium">Whether you need an office plant or a resort masterplan, IGO combines art and science to create spaces that breathe.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-6">
-                <button onClick={() => handleNavigate(Page.Assistant)} className="bg-igo-dark text-white px-12 py-6 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-igo-charcoal shadow-2xl transition-all">Start Project Wizard</button>
-                <button onClick={() => handleNavigate(Page.Visit)} className="bg-gray-100 text-igo-dark px-12 py-6 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-gray-200 transition-all">Visit Our Campus</button>
+                <a href="/assistant" onClick={(e) => handleAnchorNav(e, Page.Assistant)} className="bg-igo-dark text-white px-12 py-6 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-igo-charcoal shadow-2xl transition-all no-underline">Start Project Wizard</a>
+                <a href="/visit" onClick={(e) => handleAnchorNav(e, Page.Visit)} className="bg-gray-100 text-igo-dark px-12 py-6 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-gray-200 transition-all no-underline">Visit Our Campus</a>
             </div>
         </div>
       </section>

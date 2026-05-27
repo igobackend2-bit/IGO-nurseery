@@ -2,8 +2,10 @@
 import React from 'react';
 /* Added Pickaxe to the imports from lucide-react */
 import { MapPin, Clock, Calendar, ShieldCheck, Camera, Coffee, Car, Pickaxe } from 'lucide-react';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 const Visit: React.FC = () => {
+  useSEO(SEO_CONFIGS.visit);
   return (
     <div className="bg-white min-h-screen">
       {/* Hero */}

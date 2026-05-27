@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Calendar, UserCheck, ShieldPlus, ChevronRight, CheckCircle, CreditCard, Smartphone, ArrowLeft, Loader2 } from 'lucide-react';
 import { customerApi } from '../services/customerApi';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 const AMC_PLANS = [
   { 
@@ -38,6 +39,7 @@ const AMC_PLANS = [
 ];
 
 const AMC: React.FC = () => {
+  useSEO(SEO_CONFIGS.amc);
   const [selectedPlan, setSelectedPlan] = useState<typeof AMC_PLANS[0] | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showPayment, setShowPayment] = useState(false);

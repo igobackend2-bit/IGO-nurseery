@@ -1,6 +1,7 @@
 import React from 'react';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { CartItem } from '../types';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 interface CartPageProps {
   items: CartItem[];
@@ -28,6 +29,7 @@ const Cart: React.FC<CartPageProps> = ({
   onContinueShopping,
   onCheckout,
 }) => {
+  useSEO(SEO_CONFIGS.cart);
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const total = subtotal;
 

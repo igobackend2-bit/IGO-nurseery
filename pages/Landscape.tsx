@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PenTool, CheckCircle, ArrowRight, ShieldCheck, Star, ChevronLeft, ChevronRight, User, Quote, Send, Loader2 } from 'lucide-react';
 import { customerApi } from '../services/customerApi';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 const HERO_IMAGES = [
   "https://images.unsplash.com/photo-1590054790395-63ad360ca217?auto=format&fit=crop&q=80&w=2000",
@@ -110,6 +111,7 @@ const CASE_STUDIES: Record<string, { title: string; bg: string; challenge: strin
 };
 
 const Landscape: React.FC = () => {
+  useSEO(SEO_CONFIGS.landscape);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [filter, setFilter] = useState('All');
   const [isSubmitting, setIsSubmitting] = useState(false);

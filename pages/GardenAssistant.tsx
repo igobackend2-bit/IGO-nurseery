@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
 import { Check, ArrowRight, ArrowLeft, Loader2, Sparkles, Sprout, Home, Building2, MapPin, Sun, Wind, Wallet, ListChecks } from 'lucide-react';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 const GardenAssistant: React.FC = () => {
+  useSEO(SEO_CONFIGS.assistant);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     userType: '',

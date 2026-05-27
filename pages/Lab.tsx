@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Microscope, Database, Thermometer, Droplets, Zap, ChevronRight, Activity, Cpu, CheckCircle, Loader2 } from 'lucide-react';
 import { customerApi } from '../services/customerApi';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 const Lab: React.FC = () => {
+  useSEO(SEO_CONFIGS.lab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 

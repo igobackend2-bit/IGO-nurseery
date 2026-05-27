@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { User, Mail, Lock, CheckCircle2, ChevronRight, ArrowLeft, Twitter, Facebook, Instagram, Youtube, RefreshCw, AlertTriangle } from 'lucide-react';
 import { customerApi } from '../services/customerApi';
+import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
 
 interface CustomerAuthProps {
   onLogin: (session: any) => void;
@@ -29,7 +30,9 @@ const friendlyError = (msg: string, mode: AuthMode): string => {
   return msg;
 };
 
-const CustomerAuth: React.FC<CustomerAuthProps> = ({ onLogin }) => {
+const CustomerAuth: React.FC<CustomerAuthProps> = ({
+  onLogin }) => {
+  useSEO(SEO_CONFIGS.customerAuth);
   const [mode, setMode] = useState<AuthMode>('login');
   const [formData, setFormData] = useState({
     name: '',

@@ -17,15 +17,15 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
     <footer className="bg-gray-950 text-white pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-16">
-          {/* Brand Info - Logo Match */}
+          {/* Brand Info - Logo */}
           <div className="space-y-6">
-            <div className="flex items-center gap-3 py-2 cursor-pointer" onClick={handleNav(Page.Home)}>
+            <a href="/" onClick={handleNav(Page.Home)} className="flex items-center gap-3 py-2 cursor-pointer no-underline" aria-label="IGO Nursery Home">
               <img
                 src="/images/branding/igo-logo.jpg"
-                alt="IGO Agritechfarms"
+                alt="IGO Nursery — premium nursery plants Chennai India"
                 className="h-16 w-auto rounded-lg border border-white/20 shadow-sm object-contain bg-white"
               />
-            </div>
+            </a>
             <p className="text-gray-400 font-light leading-relaxed">
               Pioneering high-tech greenery solutions for modern living. From precision-grown indoor plants to large-scale resort landscapes.
             </p>
@@ -39,13 +39,13 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
           <div>
             <h4 className="text-lg font-bold mb-8 text-igo-lime uppercase tracking-widest text-xs">Navigation</h4>
             <ul className="space-y-4 text-gray-400">
-              <li><button onClick={handleNav(Page.Shop)} className="hover:text-igo-lime transition-colors text-left">Shop Plants</button></li>
-              <li><button onClick={handleNav(Page.Product)} className="hover:text-igo-lime transition-colors text-left">Product Page</button></li>
-              <li><button onClick={handleNav(Page.Cart)} className="hover:text-igo-lime transition-colors text-left">Cart</button></li>
-              <li><button onClick={handleNav(Page.Landscape)} className="hover:text-igo-lime transition-colors text-left">Landscape Design</button></li>
-              <li><button onClick={handleNav(Page.AMC)} className="hover:text-igo-lime transition-colors text-left">Garden Care (AMC)</button></li>
-              <li><button onClick={handleNav(Page.Lab)} className="hover:text-igo-lime transition-colors text-left">IGO R&D Lab</button></li>
-              <li><button onClick={handleNav(Page.Knowledge)} className="hover:text-igo-lime transition-colors text-left">Knowledge Hub</button></li>
+              <li><a href="/store" onClick={handleNav(Page.Shop)} className="hover:text-igo-lime transition-colors no-underline">Shop Plants</a></li>
+              <li><a href="/product" onClick={handleNav(Page.Product)} className="hover:text-igo-lime transition-colors no-underline">Product Page</a></li>
+              <li><a href="/cart" onClick={handleNav(Page.Cart)} className="hover:text-igo-lime transition-colors no-underline">Cart</a></li>
+              <li><a href="/landscape" onClick={handleNav(Page.Landscape)} className="hover:text-igo-lime transition-colors no-underline">Landscape Design</a></li>
+              <li><a href="/amc" onClick={handleNav(Page.AMC)} className="hover:text-igo-lime transition-colors no-underline">Garden Care (AMC)</a></li>
+              <li><a href="/lab" onClick={handleNav(Page.Lab)} className="hover:text-igo-lime transition-colors no-underline">IGO R&amp;D Lab</a></li>
+              <li><a href="/knowledge" onClick={handleNav(Page.Knowledge)} className="hover:text-igo-lime transition-colors no-underline">Knowledge Hub</a></li>
             </ul>
           </div>
 
@@ -96,9 +96,9 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
         <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 uppercase tracking-widest font-bold">
           <div>© 2026 IGO AGRI TECHFARMS PVT LTD. ALL RIGHTS RESERVED.</div>
           <div className="flex gap-8">
-            <button onClick={handleNav(Page.PrivacyPolicy)} className="hover:text-white transition-colors">Privacy Policy</button>
-            <button onClick={handleNav(Page.TermsOfService)} className="hover:text-white transition-colors">Terms of Service</button>
-            <button onClick={handleNav(Page.ShippingInfo)} className="hover:text-white transition-colors">Shipping Info</button>
+            <a href="/?legal=privacy" onClick={handleNav(Page.PrivacyPolicy)} className="hover:text-white transition-colors no-underline">Privacy Policy</a>
+            <a href="/?legal=terms" onClick={handleNav(Page.TermsOfService)} className="hover:text-white transition-colors no-underline">Terms of Service</a>
+            <a href="/shipping-info" onClick={handleNav(Page.ShippingInfo)} className="hover:text-white transition-colors no-underline">Shipping Info</a>
           </div>
         </div>
       </div>
