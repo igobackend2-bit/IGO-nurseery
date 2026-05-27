@@ -96,6 +96,12 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
   }, [leadId, leads.length]);
 
   const filteredLeads = leads.filter(lead => {
+    if (isVisitorMode) {
+      if (lead.type !== 'general-inquiry') return false;
+    } else {
+      if (lead.type === 'general-inquiry') return false;
+    }
+
     const matchesFilter = filter === 'all' || lead.type === filter;
     const matchesSearch = 
       lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -191,7 +197,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
           <div className="p-8 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             {!isVisitorMode ? (
               <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-                {['all', 'consultation', 'inspection', 'lab-audit', 'payment-notification', 'deletion-request', 'general-inquiry'].map(t => (
+                {['all', 'consultation', 'inspection', 'lab-audit', 'payment-notification', 'deletion-request'].map(t => (
                   <button 
                     key={t}
                     onClick={() => setFilter(t as any)}
@@ -236,7 +242,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {filteredLeads.map(lead => (
-                  <tr key={lead.id} className="group hover:bg-[#fcfdfd] transition-colors">
+                  <tr key={lead.id} className="group hover:bg-[#fcfdfd] transition-colors cursor-pointer" onClick={() => setSelectedLead(lead)}>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                          <div className={`p-3 rounded-2xl bg-gray-50 shadow-sm`}>
@@ -284,6 +290,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                           <div className="flex items-center gap-2">
                              <select
                                 title="Change lead status"
+                                onClick={(e) => e.stopPropagation()}
                                 value={pendingStatuses[lead.id] || lead.status}
                                 onChange={(e) => setPendingStatuses(prev => ({ ...prev, [lead.id]: e.target.value as Lead['status'] }))}
                                 className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none border transition-all ${
@@ -319,7 +326,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                           </div>
 
                           <button 
-                             onClick={() => setSelectedLead(lead)}
+                             onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
                              className="p-3 bg-igo-dark text-white rounded-xl hover:bg-igo-lime hover:text-igo-dark transition-all shadow-xl flex items-center justify-center gap-2 ml-2"
                           >
                              <MessageSquare className="w-4 h-4" />
