@@ -1,5 +1,7 @@
 import { Order, CartItem } from '../types';
 import { OrderData } from '../pages/Checkout';
+import { sendOrderStatusUpdateEmail } from './orderEmailService';
+import { supabase } from './supabaseClient';
 
 export const ADMIN_TOKEN_STORAGE_KEY = 'igo-admin-token';
 export const CUSTOMER_ORDER_REFS_STORAGE_KEY = 'igo-customer-order-refs';
@@ -197,7 +199,6 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
     }
 
     if (customerEmail && emailNotificationsEnabled) {
-      const { sendOrderStatusUpdateEmail } = await import('./orderEmailService');
       sendOrderStatusUpdateEmail(customerEmail, customerName, orderNumber, status)
         .then(r => { if (r.success) console.log(`✅ Status email sent to ${customerEmail}`); })
         .catch(e => console.error('Email dispatch failed:', e));
@@ -207,7 +208,6 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
 
     // Push in-app notification stored in Supabase (cross-browser)
     if (customerId) {
-      const { supabase } = await import('./supabaseClient');
       await supabase.from('notifications').insert({
         customer_id: customerId,
         title: `Order ${orderNumber} — ${status.charAt(0).toUpperCase() + status.slice(1)}`,

@@ -1,4 +1,6 @@
-import { Customer, Order, Notification } from '../types';
+import { Customer, Order, Notification, Lead } from '../types';
+import { sendLeadUpdateEmail } from './orderEmailService';
+import { supabase } from './supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -84,7 +86,6 @@ export const customerApi = {
   // Push a notification into Supabase so the customer receives it on any device/browser
   async _pushNotification(customerIdentifier: string, title: string, message: string, type: string = 'shipped', targetPage?: string, targetId?: string) {
     try {
-      const { supabase } = await import('./supabaseClient');
       let customerId = customerIdentifier;
       // If the identifier looks like an email, resolve to the customer UUID first
       if (customerIdentifier.includes('@')) {
@@ -450,7 +451,6 @@ export const customerApi = {
 
         // Send email to Cx
         try {
-          const { sendLeadUpdateEmail } = await import('./orderEmailService');
           const leadObj = {
             id: leadData.id,
             type: leadData.type,
@@ -498,14 +498,13 @@ export const customerApi = {
            lead.customer_email, 
            `New message from IGO Admin`, 
            `Re: ${lead.type} request - ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
-           'shipped',
+           'message',
            'customer-profile',
-           leadId
+           String(leadId)
         );
 
         // Send email to Cx for the new message
         try {
-          const { sendLeadUpdateEmail } = await import('./orderEmailService');
           const leadObj = {
             id: lead.id,
             type: lead.type,
