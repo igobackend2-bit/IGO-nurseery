@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BarChart3, 
   Package, 
@@ -45,6 +45,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [leads, setLeads] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const { customerApi } = await import('../services/customerApi');
+        const dbLeads = await customerApi.getLeads();
+        setLeads(dbLeads);
+      } catch (e) {
+        console.error('Failed to fetch leads for AdminLayout', e);
+      }
+    };
+    fetchLeads();
+  }, []);
 
   const menuItems = [
     { id: Page.AdminOverview, label: 'Command Center', icon: Activity },
@@ -66,7 +80,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     if (!searchQuery.trim()) return [];
     
     const query = searchQuery.toLowerCase();
-    const leads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
     
     const matchedLeads = leads.filter((l: any) => 
       (l.customerName || '').toLowerCase().includes(query) || 

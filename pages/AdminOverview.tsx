@@ -34,8 +34,13 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => 
         console.error('Failed to fetch products', e);
       }
 
-      const localLeads = JSON.parse(localStorage.getItem('igo_leads') || '[]');
-      setLeads(localLeads);
+      try {
+        const { customerApi } = await import('../services/customerApi');
+        const dbLeads = await customerApi.getLeads();
+        setLeads(dbLeads);
+      } catch (e) {
+        console.error('Failed to fetch leads', e);
+      }
     };
     fetchStats();
   }, []);
