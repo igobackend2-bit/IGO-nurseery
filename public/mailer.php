@@ -27,7 +27,7 @@ if (!$to || !$html) {
     exit;
 }
 
-$apiKey = '%%RESEND_API_KEY%%';
+$apiKey = 're_i2DUrcN5_G3tMQoE3VUDt1nzgec8E3vqS';
 
 if ($apiKey === '' || $apiKey === '%%RESEND_API_KEY%%') {
     // Fallback to basic PHP mail() if Resend is not configured

@@ -217,9 +217,11 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                                     (note.title && note.title.toLowerCase().includes('order')) ||
                                     (note.targetId && note.targetId.startsWith('IGO-'));
 
-                                  if (isOrderNotif && note.targetId) {
+                                  if (isOrderNotif && note.targetId && note.targetId !== 'orders') {
                                     target = `orders?id=${note.targetId}`;
-                                  } else if (note.targetId && note.targetId !== 'inbox' && note.targetId !== 'orders') {
+                                  } else if (isOrderNotif || note.targetId === 'orders') {
+                                    target = 'orders';
+                                  } else if (note.targetId && note.targetId !== 'inbox') {
                                     target = `inbox?id=${note.targetId}`;
                                   }
                                   handleNav(Page.CustomerProfile, target);

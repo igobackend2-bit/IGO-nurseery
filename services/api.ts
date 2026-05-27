@@ -356,7 +356,7 @@ export const submitOrder = async (payload: ReturnType<typeof createOrderPayload>
       message: `Your order has been placed successfully and is now being processed.`,
       type: 'order',
       target_page: 'customer-profile',
-      target_id: 'orders',
+      target_id: payload.orderNumber,
       is_read: false
     });
     if (notifError) console.error('Failed to create order notification:', notifError);

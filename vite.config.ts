@@ -6,19 +6,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     
-    const injectResendPlugin = () => ({
-      name: 'inject-resend-key',
-      closeBundle() {
-        const mailerPath = path.resolve(__dirname, 'dist', 'mailer.php');
-        if (fs.existsSync(mailerPath)) {
-          let content = fs.readFileSync(mailerPath, 'utf8');
-          const key = env.RESEND_API_KEY || '';
-          content = content.replace('%%RESEND_API_KEY%%', key);
-          fs.writeFileSync(mailerPath, content);
-          console.log('✅ Injected Resend API Key into mailer.php for Hostinger deployment');
-        }
-      }
-    });
+
 
     return {
       server: {
@@ -31,7 +19,7 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
-      plugins: [react(), injectResendPlugin()],
+      plugins: [react()],
       build: {
         emptyOutDir: false,
       },
