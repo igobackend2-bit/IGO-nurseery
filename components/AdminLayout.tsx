@@ -118,7 +118,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     <div className="flex min-h-[100dvh] bg-[#f1f5f9] overflow-hidden font-sans w-full">
       {/* Sidebar - FIXED to ensure it's always full height */}
       <aside className="w-72 bg-igo-dark flex flex-col shadow-2xl relative z-40 shrink-0 h-screen sticky top-0">
-        <div className="p-8">
+        <div className="p-8 overflow-y-auto flex-1 scrollbar-hide">
            <div className="flex items-center gap-3 mb-10">
               <div className="w-10 h-10 bg-igo-lime rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(132,204,22,0.3)]">
                  <Activity className="w-6 h-6 text-igo-dark" />
