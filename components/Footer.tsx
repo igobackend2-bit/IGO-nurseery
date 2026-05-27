@@ -30,10 +30,8 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
               Pioneering high-tech greenery solutions for modern living. From precision-grown indoor plants to large-scale resort landscapes.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Instagram className="w-5 h-5" /></a>
-              <a href="#" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Linkedin className="w-5 h-5" /></a>
-              <a href="#" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="#" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Twitter className="w-5 h-5" /></a>
+              <a href="https://www.instagram.com/igonursery/?hl=en" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/profile.php?id=61589516307558&rdid=M8Kh1LlBILkpO63x&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1HvaF6anie%2F#" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Facebook className="w-5 h-5" /></a>
             </div>
           </div>
 

@@ -29,7 +29,7 @@ const LeadCapturePopup: React.FC = () => {
       if (!hasDismissed) {
         setIsVisible(true);
       }
-    }, 5000);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, [hasDismissed]);
@@ -58,7 +58,7 @@ const LeadCapturePopup: React.FC = () => {
     setIsSubmitting(true);
     
     // Save to CRM as a general inquiry
-    await customerApi.createLead({
+    await customerApi.submitLead({
       type: 'general-inquiry',
       customerName: formData.name,
       customerEmail: formData.email,
