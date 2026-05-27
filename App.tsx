@@ -930,7 +930,7 @@ const App: React.FC = () => {
                 />
               );
             case Page.AdminLeads:
-              return <AdminLeads onNavigate={(page) => handlePageChange(page)} leadId={routeParam || undefined} />;
+              return <AdminLeads onNavigate={(page) => handlePageChange(page)} leadId={productSlug || undefined} />;
             case Page.AdminCustomers:
               return (
                 <AdminCustomers 
