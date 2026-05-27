@@ -255,7 +255,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                       reasonData = JSON.parse(lead.reason || '{}');
                     } catch(e) {}
                     return (
-                    <tr key={lead.id} className="group hover:bg-[#fcfdfd] transition-colors">
+                    <tr key={lead.id} className="group hover:bg-[#fcfdfd] transition-colors cursor-pointer" onClick={() => setSelectedLead(lead)}>
                        <td className="px-8 py-6">
                           <div className="flex flex-col space-y-1">
                             <span className="text-sm font-black text-igo-dark tracking-tight">{lead.customerName}</span>
@@ -503,6 +503,44 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                             <div>
                                 {(() => {
                                    const reasonStr = selectedLead.issue || selectedLead.reason || 'No specific details provided';
+                                   if (reasonStr.startsWith('{')) {
+                                      try {
+                                          const data = JSON.parse(reasonStr);
+                                          return (
+                                              <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 shadow-sm">
+                                                 <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-4 flex items-center gap-2">
+                                                    <Activity className="w-4 h-4 text-indigo-500" /> Visitor Engagement Metrics
+                                                 </label>
+                                                 <div className="space-y-5">
+                                                    <div>
+                                                        <span className="text-[9px] font-bold text-igo-muted uppercase tracking-widest block mb-1">Time Spent</span>
+                                                        <span className="text-sm font-black text-indigo-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-indigo-50">{data.timeSpent || 'Unknown'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[9px] font-bold text-igo-muted uppercase tracking-widest block mb-2">Pages Visited</span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {(data.pages || []).map((p: string, i: number) => (
+                                                                <span key={i} className="text-[10px] font-black tracking-widest uppercase text-indigo-600 bg-white border border-indigo-100 px-3 py-1.5 rounded-xl">{p}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[9px] font-bold text-igo-muted uppercase tracking-widest block mb-2">Product Interest</span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {(data.products || []).map((p: string, i: number) => (
+                                                                <span key={i} className="text-xs font-black tracking-tight text-white bg-indigo-500 px-3 py-1.5 rounded-xl shadow-sm">{p}</span>
+                                                            ))}
+                                                            {(!data.products || data.products.length === 0) && (
+                                                                <span className="text-[10px] text-indigo-400 italic font-bold">No specific products viewed</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                 </div>
+                                              </div>
+                                          );
+                                      } catch (e) {}
+                                   }
+
                                    if (reasonStr.includes('(Interested in:')) {
                                       const parts = reasonStr.split('(Interested in:');
                                       return (
