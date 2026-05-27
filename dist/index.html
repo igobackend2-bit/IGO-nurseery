@@ -44,19 +44,21 @@
     "url": "https://www.igonursery.com/",
     "description": "Precision AgriTech Greenery nursery offering premium indoor, outdoor, and agricultural plants and saplings.",
     "image": "https://www.igonursery.com/images/branding/igo-agritechfarms-logo.png",
-    "telephone": "+91-XXXXXXXXXX",
+    "telephone": "+91-9444444444",
+    "email": "igonursery@gmail.com",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Muttukadu",
+      "streetAddress": "ECR Road, Muttukadu",
       "addressLocality": "Chennai",
       "addressRegion": "Tamil Nadu",
+      "postalCode": "603112",
       "addressCountry": "IN"
     },
     "openingHours": "Mo-Sa 09:00-18:00",
     "priceRange": "₹₹",
     "sameAs": [
-      "https://www.facebook.com/igonursery",
-      "https://www.instagram.com/igonursery"
+      "https://www.facebook.com/IGOAgriTechfarms/",
+      "https://www.instagram.com/igoagritechfarms/"
     ],
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
@@ -157,25 +159,37 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/assets/index-DUaTXrxb.js"></script>
+  <script type="module" crossorigin src="/assets/index-D7LBzqsm.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-CD_85tkk.css">
 </head>
 
 <body class="bg-white text-igo-dark">
     <script>
+      // Only log to backend in local dev; in production, fall back to console only
+      var LOG_ENDPOINT = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? '/api/log'
+        : null;
       window.onerror = function(message, source, lineno, colno, error) {
-        fetch('http://localhost:4000/api/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: message, stack: error ? error.stack : '' })
-        }).catch(() => console.error(message));
+        if (LOG_ENDPOINT) {
+          fetch(LOG_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: message, stack: error ? error.stack : '' })
+          }).catch(() => console.error(message));
+        } else {
+          console.error('[Error]', message, error ? error.stack : '');
+        }
       };
       window.addEventListener('unhandledrejection', function(event) {
-        fetch('http://localhost:4000/api/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: event.reason ? event.reason.message : 'Unhandled Rejection', stack: event.reason ? event.reason.stack : '' })
-        }).catch(() => console.error(event.reason));
+        if (LOG_ENDPOINT) {
+          fetch(LOG_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: event.reason ? event.reason.message : 'Unhandled Rejection', stack: event.reason ? event.reason.stack : '' })
+          }).catch(() => console.error(event.reason));
+        } else {
+          console.error('[Unhandled Rejection]', event.reason);
+        }
       });
     </script>
     <div id="root"></div>

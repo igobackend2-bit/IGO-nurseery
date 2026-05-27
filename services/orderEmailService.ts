@@ -303,7 +303,7 @@ const persistEmailLog = (to: string, subject: string, html: string) => {
   } catch { /* non-critical */ }
 };
 
-const sendEmail = async (to: string, subject: string, html: string): Promise<EmailSendResult> => {
+const sendEmail = async (to: string, subject: string, html: string, fallbackData?: any): Promise<EmailSendResult> => {
   try {
     // Check if the customer has opted out of emails (don't check admin email)
     if (to !== 'igonursery@gmail.com') {
@@ -330,11 +330,37 @@ const sendEmail = async (to: string, subject: string, html: string): Promise<Ema
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to, subject, html }),
     });
+    
+    // On Hostinger or static servers, this might return the HTML of the SPA instead of JSON.
+    // So if it's not OK, or parsing fails, it will jump to the catch block and use the fallback!
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const resData = await res.json();
+    if (!resData.success) throw new Error(resData.error || 'API failed');
+    
     persistEmailLog(to, subject, html);
     return { success: true, mode: 'api', message: 'Email sent via Resend.' };
   } catch (err) {
-    console.error('[sendEmail] failed:', err);
+    console.error('[sendEmail] Vercel API failed, trying PHP fallback:', err);
+    
+    if (fallbackData) {
+      try {
+        const phpRes = await fetch('/mailer.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: 'igo_nursery_secret_key_2026',
+            ...fallbackData
+          })
+        });
+        if (phpRes.ok) {
+           persistEmailLog(to, subject, html);
+           return { success: true, mode: 'api', message: 'Email sent via PHP mailer (Hostinger fallback).' };
+        }
+      } catch (phpErr) {
+        console.error('[sendEmail] PHP fallback also failed:', phpErr);
+      }
+    }
+
     persistEmailLog(to, subject, html);
     return { success: false, mode: 'logged', message: 'Email API unavailable — logged locally.' };
   }
@@ -361,6 +387,11 @@ export const sendOrderStatusUpdateEmail = (
     customerEmail,
     `Your IGO Nursery Order #${orderNumber} — Status: ${status}`,
     buildOrderStatusUpdateHtml(customerName, orderNumber, status),
+    {
+      type: 'status_update',
+      to: customerEmail,
+      order: { orderNumber, status, customerName }
+    }
   );
 
 export const sendLeadUpdateEmail = async (
