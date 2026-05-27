@@ -447,6 +447,29 @@ export const customerApi = {
           'customer-profile',
           leadId
         );
+
+        // Send email to Cx
+        try {
+          const { sendLeadUpdateEmail } = await import('./orderEmailService');
+          const leadObj = {
+            id: leadData.id,
+            type: leadData.type,
+            customerName: leadData.customer_name,
+            customerEmail: leadData.customer_email,
+            customerPhone: leadData.customer_phone,
+            issue: leadData.issue,
+            reason: leadData.reason,
+            selectedPlan: leadData.selected_plan,
+            status: leadData.status,
+            adminDecision: leadData.admin_decision,
+            chatHistory: leadData.chat_history || [],
+            createdAt: leadData.created_at,
+            auditDate: leadData.audit_date
+          };
+          await sendLeadUpdateEmail(leadObj, status, decision);
+        } catch (emailErr) {
+          console.error('Failed to send lead update email:', emailErr);
+        }
       }
       return { success: true };
     } catch (e) {
@@ -479,6 +502,29 @@ export const customerApi = {
            'customer-profile',
            leadId
         );
+
+        // Send email to Cx for the new message
+        try {
+          const { sendLeadUpdateEmail } = await import('./orderEmailService');
+          const leadObj = {
+            id: lead.id,
+            type: lead.type,
+            customerName: lead.customer_name,
+            customerEmail: lead.customer_email,
+            customerPhone: lead.customer_phone,
+            issue: lead.issue,
+            reason: lead.reason,
+            selectedPlan: lead.selected_plan,
+            status: lead.status,
+            adminDecision: lead.admin_decision,
+            chatHistory: newChat,
+            createdAt: lead.created_at,
+            auditDate: lead.audit_date
+          };
+          await sendLeadUpdateEmail(leadObj, lead.status, message);
+        } catch (emailErr) {
+          console.error('Failed to send lead message email:', emailErr);
+        }
       }
       return { success: true };
     } catch (e) {
