@@ -307,16 +307,21 @@ const sendEmail = async (to: string, subject: string, html: string): Promise<Ema
   try {
     // Check if the customer has opted out of emails (don't check admin email)
     if (to !== 'igonursery@gmail.com') {
-      const { supabase } = await import('./supabaseClient');
-      const { data: customerRow } = await supabase
-        .from('customers')
-        .select('email_notifications')
-        .eq('email', to)
-        .maybeSingle();
-      
-      if (customerRow && customerRow.email_notifications === false) {
-        console.log(`🚫 Email skipped for ${to} (User opted out)`);
-        return { success: true, mode: 'logged', message: 'User opted out of emails.' };
+      try {
+        const { supabase } = await import('./supabaseClient');
+        const { data: customerRow } = await supabase
+          .from('customers')
+          .select('email_notifications')
+          .eq('email', to)
+          .maybeSingle();
+        
+        if (customerRow && customerRow.email_notifications === false) {
+          console.log(`🚫 Email skipped for ${to} (User opted out)`);
+          return { success: true, mode: 'logged', message: 'User opted out of emails.' };
+        }
+      } catch (dbError) {
+        // Ignore DB errors (e.g. column doesn't exist) and proceed with sending
+        console.warn('Could not check email preferences:', dbError);
       }
     }
 

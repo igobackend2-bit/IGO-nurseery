@@ -541,7 +541,14 @@ const AdminOrders: React.FC<AdminOrdersProps> = ({
                     <tbody className="divide-y divide-gray-50">
                       {viewingOrder.items.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="px-4 py-3 font-bold text-igo-dark">{item.product.name}</td>
+                          <td className="px-4 py-3 font-bold text-igo-dark">
+                            <div className="flex items-center gap-3">
+                              {item.product.image && (
+                                <img src={item.product.image} alt={item.product.name} className="w-10 h-10 object-cover rounded-lg shadow-sm" />
+                              )}
+                              <span>{item.product.name}</span>
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-center font-bold">{item.quantity}</td>
                           <td className="px-4 py-3 text-right text-igo-muted">{formatCurrency(item.product.price)}</td>
                           <td className="px-4 py-3 text-right font-black text-igo-dark">{formatCurrency(item.product.price * item.quantity)}</td>
