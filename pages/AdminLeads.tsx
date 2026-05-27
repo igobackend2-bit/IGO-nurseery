@@ -269,7 +269,20 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                     </td>
                     <td className="px-8 py-6">
                        <div className="max-w-xs">
-                          <p className="text-xs text-igo-dark font-black tracking-tight mb-1 line-clamp-1">{lead.issue || lead.reason || 'General inquiry'}</p>
+                          {(() => {
+                              const reasonStr = lead.issue || lead.reason || 'General inquiry';
+                              if (reasonStr.includes('(Interested in:')) {
+                                  const parts = reasonStr.split('(Interested in:');
+                                  const products = parts[1].replace(')', '').trim();
+                                  return (
+                                     <div className="mb-2">
+                                        <p className="text-[9px] text-igo-muted font-bold tracking-widest uppercase mb-0.5">Product Interest</p>
+                                        <p className="text-xs text-indigo-600 font-black tracking-tight line-clamp-2">{products}</p>
+                                     </div>
+                                  );
+                              }
+                              return <p className="text-xs text-igo-dark font-black tracking-tight mb-2 line-clamp-2">{reasonStr}</p>;
+                          })()}
                           <div className="flex items-center gap-2">
                              <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${getStatusColor(lead.status)}`}>
                                {lead.status}
@@ -405,31 +418,31 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3 underline decoration-igo-lime decoration-2 underline-offset-4">Initial Requirement</label>
                                 {(() => {
                                    const reasonStr = selectedLead.issue || selectedLead.reason || 'No specific details provided';
                                    if (reasonStr.includes('(Interested in:')) {
                                       const parts = reasonStr.split('(Interested in:');
                                       return (
-                                         <div className="space-y-4">
-                                            <p className="text-sm font-bold text-igo-dark italic leading-relaxed">
-                                                "{parts[0].trim()}"
-                                            </p>
-                                            <div className="bg-igo-lime/20 border border-igo-lime/50 rounded-2xl p-5 shadow-sm">
-                                                <label className="text-[10px] font-black text-igo-dark uppercase tracking-widest block mb-2 flex items-center gap-2">
-                                                   <Activity className="w-3 h-3 text-igo-dark" /> Customer Browsing Activity
-                                                </label>
-                                                <p className="text-base font-black text-igo-dark leading-snug">
-                                                    Looking for: <span className="text-indigo-600">{parts[1].replace(')', '').trim()}</span>
-                                                </p>
-                                            </div>
+                                         <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 shadow-sm">
+                                             <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-3 flex items-center gap-2">
+                                                <Activity className="w-4 h-4 text-indigo-500" /> Detected Browsing Interest
+                                             </label>
+                                             <p className="text-xl font-black text-igo-dark leading-snug">
+                                                 <span className="text-indigo-600">{parts[1].replace(')', '').trim()}</span>
+                                             </p>
+                                             <p className="text-[10px] text-igo-muted font-bold mt-4 uppercase tracking-widest border-t border-indigo-100/50 pt-3">
+                                                 Source: {parts[0].trim()}
+                                             </p>
                                          </div>
                                       );
                                    }
                                    return (
-                                      <p className="text-sm font-bold text-igo-dark italic leading-relaxed">
-                                          "{reasonStr}"
-                                      </p>
+                                      <>
+                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3 underline decoration-igo-lime decoration-2 underline-offset-4">Initial Requirement</label>
+                                         <p className="text-sm font-bold text-igo-dark italic leading-relaxed">
+                                             "{reasonStr}"
+                                         </p>
+                                      </>
                                    );
                                 })()}
                             </div>
