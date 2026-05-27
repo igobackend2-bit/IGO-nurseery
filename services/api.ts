@@ -215,6 +215,7 @@ export const updateAdminOrderStatus = async (token: string, orderNumber: string,
         type: status === 'cancelled' ? 'cancelled' : 'order',
         target_page: 'customer-profile',
         target_id: orderNumber,
+        is_read: false
       }).then(({ error }) => { if (error) console.error('Notification insert failed:', error.message); });
     }
   } catch (e) {
