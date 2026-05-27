@@ -942,9 +942,9 @@ const App: React.FC = () => {
                 />
               );
             case Page.AdminLeads:
-              return <AdminLeads onNavigate={handlePageChange} leadId={productSlug || undefined} />;
+              return <AdminLeads key={Page.AdminLeads} onNavigate={handlePageChange} leadId={productSlug || undefined} />;
             case Page.AdminVisitorLeads:
-              return <AdminLeads onNavigate={handlePageChange} initialFilter="general-inquiry" />;
+              return <AdminLeads key={Page.AdminVisitorLeads} onNavigate={handlePageChange} isVisitorMode={true} />;
             case Page.AdminCustomers:
               return (
                 <AdminCustomers 

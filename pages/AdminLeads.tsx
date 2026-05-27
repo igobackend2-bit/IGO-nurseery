@@ -35,11 +35,12 @@ interface AdminLeadsProps {
   onNavigate?: (page: Page, param?: string) => void;
   leadId?: string | null;
   initialFilter?: 'all' | 'consultation' | 'inspection' | 'lab-audit' | 'payment-notification' | 'deletion-request' | 'general-inquiry';
+  isVisitorMode?: boolean;
 }
 
-const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilter }) => {
+const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilter, isVisitorMode }) => {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [filter, setFilter] = useState<'all' | 'consultation' | 'inspection' | 'lab-audit' | 'payment-notification' | 'deletion-request' | 'general-inquiry'>(initialFilter || 'all');
+  const [filter, setFilter] = useState<'all' | 'consultation' | 'inspection' | 'lab-audit' | 'payment-notification' | 'deletion-request' | 'general-inquiry'>(isVisitorMode ? 'general-inquiry' : (initialFilter || 'all'));
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [adminMessage, setAdminMessage] = useState('');
@@ -177,7 +178,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
     <div className="p-10 space-y-10 font-sans animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
          <div>
-            <h1 className="text-4xl font-black text-igo-dark uppercase tracking-tighter leading-none mb-4">Inquiry Pool</h1>
+            <h1 className="text-4xl font-black text-igo-dark uppercase tracking-tighter leading-none mb-4">{isVisitorMode ? 'Popup & Visitor Leads' : 'Inquiry Pool'}</h1>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                <Inbox className="w-3 h-3 text-igo-lime" /> Relationship Management & Customer Success
             </p>
@@ -188,17 +189,25 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
         <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden mb-20">
           {/* Toolbar */}
           <div className="p-8 border-b border-gray-50 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-              {['all', 'consultation', 'inspection', 'lab-audit', 'payment-notification', 'deletion-request', 'general-inquiry'].map(t => (
-                <button 
-                  key={t}
-                  onClick={() => setFilter(t as any)}
-                  className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === t ? 'bg-igo-dark text-white shadow-xl' : 'bg-gray-50 text-igo-muted hover:bg-gray-100'}`}
-                >
-                  {t.replace('-', ' ')}
-                </button>
-              ))}
-            </div>
+            {!isVisitorMode ? (
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+                {['all', 'consultation', 'inspection', 'lab-audit', 'payment-notification', 'deletion-request', 'general-inquiry'].map(t => (
+                  <button 
+                    key={t}
+                    onClick={() => setFilter(t as any)}
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === t ? 'bg-igo-dark text-white shadow-xl' : 'bg-gray-50 text-igo-muted hover:bg-gray-100'}`}
+                  >
+                    {t.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap bg-igo-dark text-white shadow-xl">
+                  GENERAL INQUIRY (POPUP ONLY)
+                </span>
+              </div>
+            )}
             
             <div className="relative w-full lg:w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-igo-muted" />
@@ -390,9 +399,32 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
 
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3 underline decoration-igo-lime decoration-2 underline-offset-4">Initial Requirement</label>
-                                <p className="text-sm font-bold text-igo-dark italic leading-relaxed">
-                                    "{selectedLead.issue || selectedLead.reason || 'No specific details provided'}"
-                                </p>
+                                {(() => {
+                                   const reasonStr = selectedLead.issue || selectedLead.reason || 'No specific details provided';
+                                   if (reasonStr.includes('(Interested in:')) {
+                                      const parts = reasonStr.split('(Interested in:');
+                                      return (
+                                         <div className="space-y-4">
+                                            <p className="text-sm font-bold text-igo-dark italic leading-relaxed">
+                                                "{parts[0].trim()}"
+                                            </p>
+                                            <div className="bg-igo-lime/20 border border-igo-lime/50 rounded-2xl p-5 shadow-sm">
+                                                <label className="text-[10px] font-black text-igo-dark uppercase tracking-widest block mb-2 flex items-center gap-2">
+                                                   <Activity className="w-3 h-3 text-igo-dark" /> Customer Browsing Activity
+                                                </label>
+                                                <p className="text-base font-black text-igo-dark leading-snug">
+                                                    Looking for: <span className="text-indigo-600">{parts[1].replace(')', '').trim()}</span>
+                                                </p>
+                                            </div>
+                                         </div>
+                                      );
+                                   }
+                                   return (
+                                      <p className="text-sm font-bold text-igo-dark italic leading-relaxed">
+                                          "{reasonStr}"
+                                      </p>
+                                   );
+                                })()}
                             </div>
 
                             {/* Action Buttons for Decisions */}
