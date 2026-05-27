@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Package, ShoppingCart, AlertCircle } from 'lucide-react';
 import { StoreProduct, Page } from '../types';
 import { NURSERY_PRODUCTS } from '../data/nurseryProducts';
@@ -58,6 +58,21 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
       selectedProduct.unit = 'Per plant';
     }
   }
+
+  useEffect(() => {
+    if (selectedProduct && selectedProduct.name) {
+      try {
+        const stored = localStorage.getItem('igo_viewed_products');
+        let viewed = stored ? JSON.parse(stored) : [];
+        viewed = viewed.filter((name: string) => name !== selectedProduct.name);
+        viewed.unshift(selectedProduct.name);
+        if (viewed.length > 5) viewed = viewed.slice(0, 5);
+        localStorage.setItem('igo_viewed_products', JSON.stringify(viewed));
+      } catch (e) {
+        console.error('Failed to save viewed products', e);
+      }
+    }
+  }, [selectedProduct?.name]);
 
   const openProductPage = (slug: string) => {
     if (onOpenProduct) {

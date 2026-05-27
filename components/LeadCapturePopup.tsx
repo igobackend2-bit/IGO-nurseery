@@ -57,13 +57,24 @@ const LeadCapturePopup: React.FC = () => {
 
     setIsSubmitting(true);
     
+    let reasonText = 'Newsletter Subscription / Welcome Popup';
+    try {
+      const stored = localStorage.getItem('igo_viewed_products');
+      if (stored) {
+        const viewed = JSON.parse(stored);
+        if (Array.isArray(viewed) && viewed.length > 0) {
+          reasonText += ` (Interested in: ${viewed.join(', ')})`;
+        }
+      }
+    } catch (e) {}
+
     // Save to CRM as a general inquiry
     await customerApi.submitLead({
       type: 'general-inquiry',
       customerName: formData.name,
       customerEmail: formData.email,
       customerPhone: formData.phone,
-      reason: 'Newsletter Subscription / Welcome Popup',
+      reason: reasonText,
       status: 'new'
     });
 
@@ -147,6 +158,7 @@ const LeadCapturePopup: React.FC = () => {
                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                    <input 
                      type="tel" 
+                     required
                      value={formData.phone}
                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-igo-dark outline-none focus:border-igo-lime focus:ring-1 focus:ring-igo-lime transition-all"
