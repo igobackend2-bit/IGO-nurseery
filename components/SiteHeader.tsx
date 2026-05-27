@@ -211,7 +211,13 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                                 // 2. Intelligent Redirection
                                 if (note.targetPage === 'customer-profile') {
                                   let target = note.targetId || 'inbox';
-                                  if (note.type === 'order' && note.targetId) {
+                                  
+                                  const isOrderNotif = note.type === 'order' || 
+                                    (note.message && note.message.toLowerCase().includes('order')) || 
+                                    (note.title && note.title.toLowerCase().includes('order')) ||
+                                    (note.targetId && note.targetId.startsWith('IGO-'));
+
+                                  if (isOrderNotif && note.targetId) {
                                     target = `orders?id=${note.targetId}`;
                                   } else if (note.targetId && note.targetId !== 'inbox' && note.targetId !== 'orders') {
                                     target = `inbox?id=${note.targetId}`;

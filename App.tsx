@@ -103,11 +103,11 @@ const buildPath = (
     case Page.About:
       return '/about';
     case Page.Account:
-      return '/account';
+      return productSlug ? `/account/${encodeURIComponent(productSlug)}` : '/account';
     case Page.CustomerAuth:
       return '/customer-auth';
     case Page.CustomerProfile:
-      return '/customer-profile';
+      return productSlug ? `/customer-profile/${productSlug}` : '/customer-profile';
     case Page.AdminOverview:
       return '/admin-overview';
     case Page.AdminProducts:
