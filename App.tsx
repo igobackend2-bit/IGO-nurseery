@@ -438,6 +438,21 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Track session duration and pages visited
+  useEffect(() => {
+    if (!sessionStorage.getItem('igo_session_start')) {
+      sessionStorage.setItem('igo_session_start', Date.now().toString());
+    }
+    try {
+      const visited = JSON.parse(sessionStorage.getItem('igo_visited_pages') || '[]');
+      let pageName = Page[currentPage] || 'Unknown';
+      if (!visited.includes(pageName)) {
+        visited.push(pageName);
+        sessionStorage.setItem('igo_visited_pages', JSON.stringify(visited));
+      }
+    } catch (e) {}
+  }, [currentPage]);
+
   const syncRouteWithLocation = () => {
     const parsedRoute = parseLocationToRoute();
     setCurrentPage(parsedRoute.page);

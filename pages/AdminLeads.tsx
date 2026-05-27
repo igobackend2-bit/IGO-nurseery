@@ -25,7 +25,8 @@ import {
   Send,
   XCircle,
   ShieldAlert,
-  Inbox
+  Inbox,
+  Trash2
 } from 'lucide-react';
 import { Lead, Page } from '../types';
 import { customerApi } from '../services/customerApi';
@@ -173,6 +174,14 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
     }
   };
 
+  const handleDeleteLead = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to permanently delete this lead?')) {
+      await customerApi.deleteLead(id);
+      loadLeads();
+    }
+  };
+
   const stats = {
     total: leads.length,
     new: leads.filter(l => l.status === 'new').length,
@@ -229,6 +238,79 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
 
           {/* Leads List */}
           <div className="overflow-x-auto">
+            {isVisitorMode ? (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer Details</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Time & Pages Viewed</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Interest</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredLeads.map(lead => {
+                    let reasonData = { products: [], pages: [], timeSpent: '0 mins' };
+                    try {
+                      reasonData = JSON.parse(lead.reason || '{}');
+                    } catch(e) {}
+                    return (
+                    <tr key={lead.id} className="group hover:bg-[#fcfdfd] transition-colors">
+                       <td className="px-8 py-6">
+                          <div className="flex flex-col space-y-1">
+                            <span className="text-sm font-black text-igo-dark tracking-tight">{lead.customerName}</span>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-igo-muted italic">
+                                <Mail className="w-3 h-3 text-igo-lime" /> {lead.customerEmail}
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-igo-muted italic">
+                                <Phone className="w-3 h-3 text-igo-lime" /> {lead.customerPhone}
+                            </div>
+                          </div>
+                       </td>
+                       <td className="px-8 py-6">
+                           <div className="mb-2">
+                               <p className="text-[9px] text-igo-muted font-bold tracking-widest uppercase mb-0.5">Time Spent Before Popup</p>
+                               <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-indigo-100 bg-indigo-50 text-indigo-700">{reasonData.timeSpent || 'Unknown'}</span>
+                           </div>
+                           <div>
+                               <p className="text-[9px] text-igo-muted font-bold tracking-widest uppercase mb-0.5">Pages Visited</p>
+                               <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                  {(reasonData.pages || []).map((p: string, i: number) => (
+                                      <span key={i} className="text-[9px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{p}</span>
+                                  ))}
+                                  {(!reasonData.pages || reasonData.pages.length === 0) && (
+                                      <span className="text-[9px] text-gray-400 italic">No tracking data</span>
+                                  )}
+                               </div>
+                           </div>
+                       </td>
+                       <td className="px-8 py-6">
+                          <div className="max-w-xs">
+                               <div className="flex flex-wrap gap-1">
+                                  {(reasonData.products || []).map((p: string, i: number) => (
+                                      <span key={i} className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{p}</span>
+                                  ))}
+                                  {(!reasonData.products || reasonData.products.length === 0) && (
+                                      <span className="text-[10px] text-gray-400 italic">No specific product viewed</span>
+                                  )}
+                               </div>
+                          </div>
+                       </td>
+                       <td className="px-8 py-6 text-right">
+                          <button 
+                              onClick={(e) => handleDeleteLead(lead.id, e)}
+                              className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm group"
+                              title="Delete Lead"
+                          >
+                              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          </button>
+                       </td>
+                    </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            ) : (
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -351,6 +433,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                 ))}
               </tbody>
             </table>
+            )}
           </div>
 
           {filteredLeads.length === 0 && (

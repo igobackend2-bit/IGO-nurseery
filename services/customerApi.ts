@@ -548,6 +548,18 @@ export const customerApi = {
     }
   },
 
+  async deleteLead(leadId: string) {
+    try {
+      const { supabase } = await import('./supabaseClient');
+      const { error } = await supabase.from('leads').delete().eq('id', leadId);
+      if (error) throw new Error(error.message);
+      return { success: true };
+    } catch (e) {
+      console.error('deleteLead failed:', e);
+      return { success: false };
+    }
+  },
+
   async submitLead(leadData: any) {
     try {
       const { supabase } = await import('./supabaseClient');

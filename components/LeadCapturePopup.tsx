@@ -57,16 +57,26 @@ const LeadCapturePopup: React.FC = () => {
 
     setIsSubmitting(true);
     
-    let reasonText = 'Newsletter Subscription / Welcome Popup';
+    let reasonData: any = { products: [], pages: [], timeSpent: '0 mins' };
     try {
-      const stored = localStorage.getItem('igo_viewed_products');
-      if (stored) {
-        const viewed = JSON.parse(stored);
-        if (Array.isArray(viewed) && viewed.length > 0) {
-          reasonText += ` (Interested in: ${viewed.join(', ')})`;
-        }
+      const storedProducts = localStorage.getItem('igo_viewed_products');
+      if (storedProducts) {
+        reasonData.products = JSON.parse(storedProducts);
+      }
+      
+      const visitedPages = sessionStorage.getItem('igo_visited_pages');
+      if (visitedPages) {
+        reasonData.pages = JSON.parse(visitedPages);
+      }
+      
+      const sessionStart = sessionStorage.getItem('igo_session_start');
+      if (sessionStart) {
+        const minutes = Math.round((Date.now() - parseInt(sessionStart)) / 60000);
+        reasonData.timeSpent = `${minutes < 1 ? '< 1' : minutes} mins`;
       }
     } catch (e) {}
+
+    const reasonText = JSON.stringify(reasonData);
 
     // Save to CRM as a general inquiry
     await customerApi.submitLead({
