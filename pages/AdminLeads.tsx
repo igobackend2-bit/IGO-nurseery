@@ -297,13 +297,23 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
                           </div>
                        </td>
                        <td className="px-8 py-6 text-right">
-                          <button 
-                              onClick={(e) => handleDeleteLead(lead.id, e)}
-                              className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm group"
-                              title="Delete Lead"
-                          >
-                              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                             <button 
+                                 onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
+                                 className="p-3 bg-igo-dark text-white rounded-xl hover:bg-igo-lime hover:text-igo-dark transition-all shadow-xl flex items-center justify-center gap-2"
+                                 title="View Full Details"
+                             >
+                                 <MessageSquare className="w-4 h-4" />
+                                 <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Hub Portal</span>
+                             </button>
+                             <button 
+                                 onClick={(e) => handleDeleteLead(lead.id, e)}
+                                 className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm group"
+                                 title="Delete Lead"
+                             >
+                                 <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                             </button>
+                          </div>
                        </td>
                     </tr>
                     )
