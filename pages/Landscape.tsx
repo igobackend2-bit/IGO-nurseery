@@ -288,6 +288,7 @@ const Landscape: React.FC = () => {
             {filteredServices.map((s, i) => (
                 <div 
                   key={i} 
+                  onClick={() => setSelectedCaseStudy(s.title)}
                   className="group cursor-pointer bg-white rounded-[3rem] p-4 border border-gray-50 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
                 >
                     <div className="aspect-[4/5] rounded-[2.5rem] overflow-hidden mb-8 relative">
