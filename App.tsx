@@ -1024,6 +1024,7 @@ const App: React.FC = () => {
     Page.AdminOrders,
     Page.AdminCustomers,
     Page.AdminLeads,
+    Page.AdminVisitorLeads,
     Page.AdminProducts,
     Page.AdminInventory,
     Page.AdminOverview,
