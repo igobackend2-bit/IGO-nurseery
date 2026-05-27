@@ -97,7 +97,7 @@ const buildPath = (
     case Page.AdminOrders:
       return '/admin-orders';
     case Page.AdminLeads:
-      return '/admin-leads';
+      return productSlug ? `/admin-leads/${productSlug}` : '/admin-leads';
     case Page.AddProduct:
       return '/add-product';
     case Page.About:
@@ -231,11 +231,12 @@ const parseLocationToRoute = (): ParsedRoute => {
   }
 
   if (first === 'admin-leads') {
+    const leadId = segments[1] ? segments[1] : null;
     return {
       page: Page.AdminLeads,
-      productSlug: null,
+      productSlug: leadId,
       knowledgeArticleId: null,
-      canonicalPath: '/admin-leads',
+      canonicalPath: leadId ? `/admin-leads/${leadId}` : '/admin-leads',
     };
   }
 
@@ -929,7 +930,7 @@ const App: React.FC = () => {
                 />
               );
             case Page.AdminLeads:
-              return <AdminLeads onNavigate={(page) => handlePageChange(page)} />;
+              return <AdminLeads onNavigate={(page) => handlePageChange(page)} leadId={routeParam || undefined} />;
             case Page.AdminCustomers:
               return (
                 <AdminCustomers 

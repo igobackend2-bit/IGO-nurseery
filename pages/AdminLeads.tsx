@@ -77,7 +77,7 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId }) => {
 
   useEffect(() => {
     loadLeads();
-  }, [selectedLead]);
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

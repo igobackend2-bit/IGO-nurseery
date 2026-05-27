@@ -259,6 +259,24 @@ ${emailHeader('🚀', 'New Order Received!', 'Action required — process this o
 </div>
 ${emailFooter()}`);
 
+const buildAdminNewLeadHtml = (lead: any): string =>
+  emailWrap(`
+${emailHeader('🔔', 'New Lead Inquiry!', 'Action required — a customer has reached out')}
+<div style="padding:36px 40px;">
+  <p style="font-size:14px;color:#555;line-height:1.7;margin-bottom:20px;">
+    A new <strong>${lead.type.toUpperCase()}</strong> request has been submitted by <strong>${lead.customerName}</strong>.
+  </p>
+  ${infoBox([
+    ['Customer Name', lead.customerName],
+    ['Email', lead.customerEmail],
+    ['Phone', lead.customerPhone || 'Not provided'],
+    ['Requirement', lead.issue || lead.reason || 'General Inquiry'],
+    ['Plan/Service', lead.selectedPlan || 'None'],
+  ])}
+  ${ctaButton('VIEW LEAD DETAILS →', `${origin()}/admin-leads`)}
+</div>
+${emailFooter()}`);
+
 const buildLeadUpdateHtml = (lead: Lead, status: string, note?: string): string => {
   const dashboardUrl = `${origin()}/customer-profile`;
   const statusColor = status === 'rejected' ? '#b71c1c' : status === 'approved' || status === 'resolved' ? '#2d7a2d' : '#1565c0';
@@ -382,6 +400,9 @@ export const sendOrderShippedEmail = (data: EmailData): Promise<EmailSendResult>
 
 export const sendAdminOrderNotification = (data: EmailData): Promise<EmailSendResult> =>
   sendEmail('igonursery@gmail.com', `New Order Alert: #${data.orderNumber}`, buildAdminNewOrderHtml(data));
+
+export const sendAdminNewLeadNotificationEmail = (lead: any): Promise<EmailSendResult> =>
+  sendEmail('igonursery@gmail.com', `New Lead Inquiry: ${lead.customerName}`, buildAdminNewLeadHtml(lead));
 
 export const sendOrderStatusUpdateEmail = (
   customerEmail: string,

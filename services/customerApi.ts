@@ -567,6 +567,13 @@ export const customerApi = {
       
       if (error) throw new Error(error.message);
       
+      try {
+        const { sendAdminNewLeadNotificationEmail } = await import('./orderEmailService');
+        await sendAdminNewLeadNotificationEmail({ ...leadData, id: data.id });
+      } catch (emailErr) {
+        console.error('Failed to send admin lead notification email:', emailErr);
+      }
+      
       return { success: true, lead: { ...leadData, id: data.id } };
     } catch (e) {
       console.error('submitLead failed:', e);
