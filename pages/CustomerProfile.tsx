@@ -13,13 +13,15 @@ import {
   XCircle,
   AlertCircle,
   Shield,
-  XOctagon
+  XOctagon,
+  Heart
 } from 'lucide-react';
 import { Customer, Order, Notification, Lead } from '../types';
 import { customerApi } from '../services/customerApi';
 import { MessageSquare, Send, Inbox, ArrowLeft, Copy, ExternalLink, Wallet, Box } from 'lucide-react';
+import { useWishlist } from '../hooks/useWishlist';
 
-type TabType = 'account' | 'orders' | 'billing' | 'settings' | 'inbox' | 'privacy' | 'tracker';
+type TabType = 'account' | 'orders' | 'billing' | 'settings' | 'inbox' | 'privacy' | 'tracker' | 'wishlist';
 
 interface CustomerProfileProps {
   customer: Customer;
@@ -29,6 +31,7 @@ interface CustomerProfileProps {
   onUpdateProfile: (customer: Customer) => void;
   onRefreshNotifications?: () => void;
   initialTab?: TabType;
+  addToCart?: (product: any) => void;
 }
 
 const CustomerProfile: React.FC<CustomerProfileProps> = ({
@@ -39,7 +42,9 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
   onUpdateProfile,
   onRefreshNotifications,
   initialTab,
+  addToCart,
 }) => {
+  const { wishlist, toggleWishlist } = useWishlist();
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'account');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: customer?.name || '', phone: customer?.phone || '' });
@@ -218,6 +223,7 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
             <nav className="space-y-1 relative z-10">
               {[
                 { id: 'account', label: 'Account Profile', icon: User },
+                { id: 'wishlist', label: 'My Wishlist', icon: Heart },
                 { id: 'orders', label: 'Project History', icon: Package },
                 { id: 'tracker', label: 'Order Tracker', icon: Truck },
                 { id: 'billing', label: 'Payment & Billing', icon: CreditCard },
@@ -280,6 +286,7 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
                 </div>
                 <h2 className="text-4xl lg:text-6xl font-black text-white md:text-igo-dark uppercase tracking-tighter leading-none drop-shadow-xl">
                   {activeTab === 'account' ? 'Dashboard' : 
+                   activeTab === 'wishlist' ? 'Wishlist' :
                    activeTab === 'orders' ? 'Projects' :
                    activeTab === 'inbox' ? 'Intelligence' : activeTab}
                 </h2>
@@ -920,6 +927,64 @@ const CustomerProfile: React.FC<CustomerProfileProps> = ({
                 </div>
               </div>
             )}
+
+            {activeTab === 'wishlist' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h4 className="text-2xl font-black text-igo-dark tracking-tighter">My Wishlist</h4>
+                    <p className="text-sm text-igo-muted mt-1 font-medium">Your favorite plants, saved for later.</p>
+                  </div>
+                  <div className="bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <Heart className="w-4 h-4 fill-current" /> {wishlist.length} Items
+                  </div>
+                </div>
+
+                {wishlist.length === 0 ? (
+                  <div className="bg-white border border-gray-100 rounded-[2rem] p-12 text-center flex flex-col items-center">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                      <Heart className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <h5 className="text-lg font-black text-igo-dark mb-2">Your Wishlist is Empty</h5>
+                    <p className="text-gray-500 max-w-sm mb-6">You haven't saved any plants yet. Explore our nursery and find something you love!</p>
+                    <a href="/store" className="bg-igo-dark text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-igo-charcoal transition-all inline-flex">
+                      Browse Plants
+                    </a>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {wishlist.map(product => (
+                      <div key={product.id} className="bg-white border border-gray-100 rounded-3xl p-5 hover:shadow-xl transition-all duration-300 group flex flex-col">
+                        <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-50 mb-4">
+                          <img src={product.image || '/images/placeholder.png'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <button 
+                            onClick={() => toggleWishlist(product)}
+                            className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md text-red-500 hover:scale-110 transition-transform"
+                            title="Remove from Wishlist"
+                          >
+                            <Heart className="w-4 h-4 fill-current" />
+                          </button>
+                        </div>
+                        <div className="flex-grow">
+                          <h5 className="font-black text-igo-dark text-lg leading-tight mb-1">{product.name}</h5>
+                          <p className="text-xs font-bold text-igo-lime uppercase tracking-wider mb-2">{product.category}</p>
+                          <p className="font-black text-igo-dark text-xl">₹{product.price}</p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            if (addToCart) addToCart(product);
+                          }}
+                          className="mt-4 w-full bg-igo-dark text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-igo-lime hover:text-igo-dark transition-all flex items-center justify-center gap-2"
+                        >
+                          <Package className="w-4 h-4" /> Move to Cart
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
             {activeTab === 'tracker' && (
               <div className="space-y-8">
                 <div>

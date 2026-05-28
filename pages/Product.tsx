@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Package, ShoppingCart, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Package, ShoppingCart, AlertCircle, Heart } from 'lucide-react';
 import { StoreProduct, Page } from '../types';
 import { NURSERY_PRODUCTS } from '../data/nurseryProducts';
 import { PLANT_SEEDS } from '../data/plantSeeds';
 import { useSEO, getProductSEO, SEO_CONFIGS } from '../hooks/useSEO';
+import { useWishlist } from '../hooks/useWishlist';
 
 const PRODUCTS = NURSERY_PRODUCTS;
 
@@ -50,6 +51,8 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
         return null;
       })()
     : null;
+
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   // Clone to avoid direct mutation of state/static data
   if (selectedProduct) {
@@ -281,23 +284,31 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
                 )}
               </div>
 
-              <button
-                disabled={selectedProduct.outOfStock}
-                onClick={handleAddCurrentProductToCart}
-                className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest inline-flex items-center justify-center gap-3 shadow-xl transition-all ${
-                  selectedProduct.outOfStock
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-igo-dark text-white hover:bg-igo-charcoal active:scale-95'
-                }`}
-              >
-                {selectedProduct.outOfStock ? (
-                  <>Not Available</>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4" /> Add to Collection
-                  </>
-                )}
-              </button>
+              <div className="flex gap-4">
+                <button
+                  disabled={selectedProduct.outOfStock}
+                  onClick={handleAddCurrentProductToCart}
+                  className={`flex-1 py-5 rounded-2xl font-black uppercase text-xs tracking-widest inline-flex items-center justify-center gap-3 shadow-xl transition-all ${
+                    selectedProduct.outOfStock
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-igo-dark text-white hover:bg-igo-charcoal active:scale-95'
+                  }`}
+                >
+                  {selectedProduct.outOfStock ? (
+                    <>Not Available</>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-4 h-4" /> Add to Collection
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => toggleWishlist(selectedProduct)}
+                  className="px-6 py-5 rounded-2xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors flex items-center justify-center"
+                >
+                  <Heart className={`w-6 h-6 ${isInWishlist(selectedProduct.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                </button>
+              </div>
             </div>
           </div>
         </section>

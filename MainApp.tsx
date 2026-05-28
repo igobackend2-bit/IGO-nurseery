@@ -996,8 +996,9 @@ const MainApp: React.FC = () => {
             orders={customerOrders}
             notifications={notifications}
             onLogout={handleCustomerLogout}
-            onUpdateProfile={(updated) => setCustomer(updated)}
-            onRefreshNotifications={loadCustomerData}
+            onUpdateProfile={(updatedCustomer) => setCustomer(updatedCustomer)}
+            onRefreshNotifications={fetchCustomerData}
+            addToCart={handleAddToCart}
             initialTab={routeParam as any}
           />
         );

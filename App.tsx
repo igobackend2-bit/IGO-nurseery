@@ -912,6 +912,7 @@ const App: React.FC = () => {
             onLogout={handleCustomerLogout}
             onUpdateProfile={(updatedCustomer) => setCustomer(updatedCustomer)}
             onRefreshNotifications={fetchCustomerData}
+            addToCart={handleAddToCart}
             initialTab={(() => {
               // Read tab from URL path segment (e.g. /customer-profile/inbox)
               const pathSegment = window.location.pathname.split('/').filter(Boolean)[1];

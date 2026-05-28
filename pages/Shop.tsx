@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Search, ShoppingBag, Star, ShieldCheck, Truck, RotateCcw, AlertCircle } from 'lucide-react';
+import { Search, ShoppingBag, Star, ShieldCheck, Truck, RotateCcw, AlertCircle, Heart } from 'lucide-react';
 import { Product, StoreProduct } from '../types';
 import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
+import { useWishlist } from '../hooks/useWishlist';
 
 // Plant data imported from centralised file below
 
@@ -54,6 +55,8 @@ interface ShopProps {
 const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
   // SEO: Unique title, meta description, and canonical for /store page
   useSEO(SEO_CONFIGS.store);
+
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,6 +188,17 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
                     Premium Quality
                   </span>
                 </div>
+
+                <button
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    toggleWishlist(product);
+                  }}
+                  className="absolute top-4 right-4 p-2.5 rounded-full shadow-lg bg-white hover:bg-gray-50 transition-colors z-20"
+                >
+                  <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                </button>
                 
                 <button
                   disabled={isOutOfStock}
