@@ -26,11 +26,15 @@ import {
   XCircle,
   ShieldAlert,
   Inbox,
-  Trash2
+  Trash2,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Lead, Page } from '../types';
 import { customerApi } from '../services/customerApi';
 import { sendLeadUpdateEmail } from '../services/orderEmailService';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AdminLeadsProps {
   onNavigate?: (page: Page, param?: string) => void;
@@ -189,6 +193,57 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
     deletions: leads.filter(l => l.type === 'deletion-request').length,
   };
 
+  const handleExportExcel = () => {
+    const dataToExport = filteredLeads.map(l => ({
+      'Lead ID': l.id,
+      'Type': l.type,
+      'Customer Name': l.customerName,
+      'Email': l.customerEmail,
+      'Phone': l.customerPhone || 'N/A',
+      'Status': l.status,
+      'Issue/Reason': l.issue || l.reason || 'N/A',
+      'Date': new Date(l.createdAt).toLocaleDateString(),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
+    XLSX.writeFile(workbook, `IGO_Nursery_Leads_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('IGO Nursery - Leads Report', 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total Leads: ${filteredLeads.length}`, 14, 35);
+
+    const tableColumn = ["Type", "Name", "Email", "Phone", "Status", "Date"];
+    const tableRows = filteredLeads.map(l => [
+      l.type.toUpperCase(),
+      l.customerName,
+      l.customerEmail,
+      l.customerPhone || 'N/A',
+      l.status.toUpperCase(),
+      new Date(l.createdAt).toLocaleDateString()
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [132, 204, 22], textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+
+    doc.save(`IGO_Nursery_Leads_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="p-10 space-y-10 font-sans animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -197,6 +252,20 @@ const AdminLeads: React.FC<AdminLeadsProps> = ({ onNavigate, leadId, initialFilt
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                <Inbox className="w-3 h-3 text-igo-lime" /> Relationship Management & Customer Success
             </p>
+         </div>
+         <div className="flex items-center gap-3">
+           <button
+             onClick={handleExportExcel}
+             className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-green-50 transition-all"
+           >
+             <FileSpreadsheet className="w-4 h-4" /> Export Excel
+           </button>
+           <button
+             onClick={handleExportPDF}
+             className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-red-500 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-red-50 transition-all"
+           >
+             <FileText className="w-4 h-4" /> Export PDF
+           </button>
          </div>
       </div>
 

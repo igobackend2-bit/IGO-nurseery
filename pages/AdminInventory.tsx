@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Package, AlertCircle, CheckCircle2, ShoppingCart, Tag, Filter, Trash2, X, Edit2, ImagePlus, Save, Minus, Plus } from 'lucide-react';
+import { Package, AlertCircle, CheckCircle2, ShoppingCart, Tag, Filter, Trash2, X, Edit2, ImagePlus, Save, Minus, Plus, FileSpreadsheet, FileText } from 'lucide-react';
 import { StoreProduct } from '../types';
 import { productApi } from '../services/productApi';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AdminInventoryProps {
   products: StoreProduct[];
@@ -110,6 +113,52 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
     return !p.isArchived;
   });
 
+  const handleExportExcel = () => {
+    const dataToExport = filteredProducts.map(p => ({
+      'Product ID': p.id,
+      'Name': p.name,
+      'Category': p.category,
+      'Current Stock': p.stock || 0,
+      'Status': p.isArchived ? 'Archived' : (p.outOfStock || (p.stock !== undefined && p.stock <= 0) ? 'Out of Stock' : (p.stock !== undefined && p.stock < 20 ? 'Low Stock' : 'In Stock')),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+    XLSX.writeFile(workbook, `IGO_Nursery_Inventory_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('IGO Nursery - Inventory Report', 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total Items: ${filteredProducts.length}`, 14, 35);
+
+    const tableColumn = ["Name", "Category", "Current Stock", "Status"];
+    const tableRows = filteredProducts.map(p => [
+      p.name,
+      p.category,
+      (p.stock || 0).toString(),
+      p.isArchived ? 'Archived' : (p.outOfStock || (p.stock !== undefined && p.stock <= 0) ? 'Out of Stock' : (p.stock !== undefined && p.stock < 20 ? 'Low Stock' : 'In Stock'))
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [132, 204, 22], textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+
+    doc.save(`IGO_Nursery_Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="p-10 space-y-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -120,7 +169,19 @@ const AdminInventory: React.FC<AdminInventoryProps> = ({ products, onUpdateProdu
           </p>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4 items-center">
+           <button
+             onClick={handleExportExcel}
+             className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-green-50 transition-all"
+           >
+             <FileSpreadsheet className="w-4 h-4" /> Export Excel
+           </button>
+           <button
+             onClick={handleExportPDF}
+             className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-red-500 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-red-50 transition-all"
+           >
+             <FileText className="w-4 h-4" /> Export PDF
+           </button>
            <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm">
               <button 
                 onClick={() => setFilter('all')}

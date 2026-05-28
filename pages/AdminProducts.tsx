@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Package, Search, Filter, Edit2, Trash2, X, ImagePlus, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Package, Search, Filter, Edit2, Trash2, X, ImagePlus, Save, AlertCircle, CheckCircle2, FileSpreadsheet, FileText } from 'lucide-react';
 import { StoreProduct } from '../types';
 import { productApi } from '../services/productApi';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AdminProductsProps {
   products: StoreProduct[];
@@ -68,6 +71,55 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onUpdateProduct
     await productApi.updateProduct(productId, { outOfStock: newStatus, stock: newStatus ? 0 : 100 });
   };
 
+  const handleExportExcel = () => {
+    const dataToExport = filteredProducts.map(p => ({
+      'Product ID': p.id,
+      'Name': p.name,
+      'Category': p.category,
+      'Price (INR)': p.price,
+      'Description': p.description,
+      'In Stock': !p.outOfStock ? 'Yes' : 'No',
+      'Archived': p.isArchived ? 'Yes' : 'No',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+    XLSX.writeFile(workbook, `IGO_Nursery_Products_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('IGO Nursery - Products Report', 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total Products: ${filteredProducts.length}`, 14, 35);
+
+    const tableColumn = ["Name", "Category", "Price", "In Stock", "Archived"];
+    const tableRows = filteredProducts.map(p => [
+      p.name,
+      p.category,
+      `Rs. ${p.price.toLocaleString('en-IN')}`,
+      !p.outOfStock ? 'Yes' : 'No',
+      p.isArchived ? 'Yes' : 'No'
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [132, 204, 22], textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+
+    doc.save(`IGO_Nursery_Products_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="p-10 space-y-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -79,6 +131,18 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onUpdateProduct
         </div>
         
         <div className="flex gap-4 items-center">
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-green-50 transition-all"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Export Excel
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-red-500 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-red-50 transition-all"
+            >
+              <FileText className="w-4 h-4" /> Export PDF
+            </button>
             <div className="relative w-64">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-igo-muted" />
               <input 
