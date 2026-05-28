@@ -11,10 +11,15 @@ import {
   Calendar,
   AlertCircle,
   Cpu,
-  Activity
+  Activity,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { productApi } from '../services/productApi';
 import { Order, Lead, StoreProduct, Page } from '../types';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AdminOverviewProps {
   orders: Order[];
@@ -134,6 +139,67 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => 
 
   const maxTotal = Math.max(...chartData.map(d => d.total), 1);
 
+  const handleExportExcel = () => {
+    const today = new Date();
+    const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today.toDateString()).length;
+    const todayLeads = leads.filter(l => new Date(l.createdAt || Date.now()).toDateString() === today.toDateString()).length;
+    const shippedOrdersCount = orders.filter(o => o.status === 'shipped' || o.status === 'delivered').length;
+
+    const dataToExport = [{
+      'Report Date': today.toLocaleDateString(),
+      'Orders Today': todayOrders,
+      'Inquiries Today': todayLeads,
+      'Total Shipped/Delivered': shippedOrdersCount,
+      'Monthly Revenue (INR)': revenue,
+      'Active Inquiries': activeInquiriesCount,
+      'Pending Orders': pendingOrdersCount,
+      'Live Inventory Count': liveInventoryCount,
+    }];
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Overview');
+    XLSX.writeFile(workbook, `IGO_Nursery_CommandCenter_Report_${today.toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    const today = new Date();
+    const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today.toDateString()).length;
+    const todayLeads = leads.filter(l => new Date(l.createdAt || Date.now()).toDateString() === today.toDateString()).length;
+    const shippedOrdersCount = orders.filter(o => o.status === 'shipped' || o.status === 'delivered').length;
+
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('IGO Nursery - Command Center Report', 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${today.toLocaleDateString()}`, 14, 30);
+
+    const tableColumn = ["Metric", "Value"];
+    const tableRows = [
+      ["Orders Placed Today", todayOrders.toString()],
+      ["Inquiries Today", todayLeads.toString()],
+      ["Total Shipped/Delivered", shippedOrdersCount.toString()],
+      ["Monthly Revenue", formattedRevenue],
+      ["Active Inquiries", activeInquiriesCount.toString()],
+      ["Pending Orders", pendingOrdersCount.toString()],
+      ["Live Inventory Count", liveInventoryCount.toString()]
+    ];
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      styles: { fontSize: 10, cellPadding: 5 },
+      headStyles: { fillColor: [132, 204, 22], textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+
+    doc.save(`IGO_Nursery_CommandCenter_Report_${today.toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="p-10 space-y-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -143,9 +209,23 @@ const AdminOverview: React.FC<AdminOverviewProps> = ({ orders, onNavigate }) => 
                <Calendar className="w-3 h-3 text-igo-lime" /> Platform Metrics Summary — Real-time Stream
             </p>
          </div>
-         <div className="flex bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-            <button className="px-6 py-2 bg-igo-dark text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Last 30 Days</button>
-            <button className="px-6 py-2 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:text-igo-dark">Current Qtr</button>
+         <div className="flex flex-wrap gap-3 items-center">
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-green-500 text-green-700 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-green-50 transition-all"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Export Excel
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-red-500 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-red-50 transition-all"
+            >
+              <FileText className="w-4 h-4" /> Export PDF
+            </button>
+            <div className="flex bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+               <button className="px-6 py-2 bg-igo-dark text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Last 30 Days</button>
+               <button className="px-6 py-2 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:text-igo-dark">Current Qtr</button>
+            </div>
          </div>
       </div>
 

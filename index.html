@@ -176,12 +176,28 @@
   }
   </script>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Preconnect to external origins before they're needed -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+  <link rel="dns-prefetch" href="https://supabase.co">
+
+  <!-- Google Fonts: display=swap prevents invisible text during font load -->
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap">
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
-    rel="stylesheet">
+    rel="stylesheet"
+    media="print" onload="this.media='all'">
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
+      rel="stylesheet">
+  </noscript>
+
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -253,16 +269,9 @@
       animation: float 4s ease-in-out infinite;
     }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
-  }
-}
-</script>
+  <!-- importmap removed: Vite bundles React at compile time so the CDN
+       references were never used in production and only added extra DNS
+       lookups for esm.sh on every page load. -->
   <link rel="stylesheet" href="/index.css">
 </head>
 

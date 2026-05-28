@@ -1,31 +1,37 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, Suspense, lazy } from 'react';
 import Header from './components/SiteHeader';
 import Footer from './components/Footer';
-import Home from './pages/Home';
-import Shop from './pages/Shop';
-import Product from './pages/Product';
-import GardenAssistant from './pages/GardenAssistant';
-import Landscape from './pages/Landscape';
-import AMC from './pages/AMC';
-import Lab from './pages/Lab';
-import KnowledgeHub from './pages/KnowledgeHub';
-import KnowledgeDetail from './pages/KnowledgeDetail';
-import Visit from './pages/Visit';
-import Cart from './pages/Cart';
-import AddProduct from './pages/AddProduct';
-import Checkout, { OrderData } from './pages/Checkout';
-import OrderConfirmation from './pages/OrderConfirmation';
-import OrderHistory from './pages/OrderHistory';
-import AdminOrders from './pages/AdminOrders';
-import AdminLeads from './pages/AdminLeads';
-import AdminOverview from './pages/AdminOverview';
 import AdminLayout from './components/AdminLayout';
-import AdminLogin from './pages/AdminLogin';
-import AdminProducts from './pages/AdminProducts';
-import AdminInventory from './pages/AdminInventory';
-import AdminCustomers from './pages/AdminCustomers';
-import CustomerAuth from './pages/CustomerAuth';
-import CustomerProfile from './pages/CustomerProfile';
+import LeadCapturePopup from './components/LeadCapturePopup';
+import ErrorBoundary from './components/ErrorBoundary';
+// ── Type-only import (stripped at build time, no runtime cost) ──────────────
+import type { OrderData } from './pages/Checkout';
+
+// ── Lazy-loaded pages: each page is its own JS chunk loaded on demand ────────
+const Home             = lazy(() => import('./pages/Home'));
+const Shop             = lazy(() => import('./pages/Shop'));
+const Product          = lazy(() => import('./pages/Product'));
+const GardenAssistant  = lazy(() => import('./pages/GardenAssistant'));
+const Landscape        = lazy(() => import('./pages/Landscape'));
+const AMC              = lazy(() => import('./pages/AMC'));
+const Lab              = lazy(() => import('./pages/Lab'));
+const KnowledgeHub     = lazy(() => import('./pages/KnowledgeHub'));
+const KnowledgeDetail  = lazy(() => import('./pages/KnowledgeDetail'));
+const Visit            = lazy(() => import('./pages/Visit'));
+const Cart             = lazy(() => import('./pages/Cart'));
+const AddProduct       = lazy(() => import('./pages/AddProduct'));
+const Checkout         = lazy(() => import('./pages/Checkout'));
+const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
+const OrderHistory     = lazy(() => import('./pages/OrderHistory'));
+const AdminOrders      = lazy(() => import('./pages/AdminOrders'));
+const AdminLeads       = lazy(() => import('./pages/AdminLeads'));
+const AdminOverview    = lazy(() => import('./pages/AdminOverview'));
+const AdminLogin       = lazy(() => import('./pages/AdminLogin'));
+const AdminProducts    = lazy(() => import('./pages/AdminProducts'));
+const AdminInventory   = lazy(() => import('./pages/AdminInventory'));
+const AdminCustomers   = lazy(() => import('./pages/AdminCustomers'));
+const CustomerAuth     = lazy(() => import('./pages/CustomerAuth'));
+const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
 import { customerApi } from './services/customerApi';
 import { productApi } from './services/productApi';
 import { Customer, Notification, CartItem, Page, StoreProduct, Product as NurseryProduct, Order } from './types';
@@ -33,9 +39,14 @@ import { Bell, CheckCircle2, X } from 'lucide-react';
 import { INITIAL_STORE_PRODUCTS } from './data/storeProducts';
 import { KNOWLEDGE_ARTICLES } from './data/knowledgeArticles';
 import { sendOrderConfirmationEmail, sendAdminOrderNotification } from './services/orderEmailService';
-import LeadCapturePopup from './components/LeadCapturePopup';
-import ErrorBoundary from './components/ErrorBoundary';
 import { submitOrder, createOrderPayload, fetchAdminOrders, updateAdminOrderStatus } from './services/api';
+
+// ── Page-transition fallback spinner ────────────────────────────────────────
+const PageSpinner: React.FC = () => (
+  <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="w-10 h-10 border-4 border-igo-lime border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 interface ParsedRoute {
   page: Page;
@@ -631,48 +642,48 @@ const App: React.FC = () => {
   };
 
   const handleSubmitOrder = async (orderData: OrderData) => {
-    const orderNumber = `IGO-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    const trackingNumber = `TRK-${orderNumber.substring(4)}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
-    
+    // ── BUG FIX: order numbers are generated inside createOrderPayload/submitOrder.
+    //   Previously a second set of IDs was generated here and used in newOrder,
+    //   causing a mismatch between what is stored in the DB and what the local
+    //   admin state shows.  Now we derive everything from the DB response. ──────
+
     // Calculate order totals
     const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
     const tax = subtotal * 0.05; // 5% tax
     const deliveryCharge = subtotal > 500 ? 0 : 50; // Free delivery on orders above ₹500
     const total = subtotal + tax + deliveryCharge;
-    
-    // Create date strings
-    const createdAt = new Date().toISOString();
-    const estimatedDelivery = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days from now
-    
-    // Create the order object
-    const newOrder: Order = {
-      id: `order-${Date.now()}`,
-      orderNumber,
-      trackingNumber,
-      customerName: `${orderData.firstName} ${orderData.lastName}`,
-      customerEmail: orderData.email,
-      customerPhone: orderData.phone,
-      shippingAddress: orderData.address,
-      city: orderData.city,
-      state: orderData.state,
-      zipCode: orderData.zipCode,
-      items: cartItems,
-      subtotal,
-      tax,
-      deliveryCharge,
-      total,
-      paymentMethod: orderData.paymentMethod,
-      status: 'processing',
-      createdAt,
-      estimatedDelivery,
-    };
-    
-    // 1. Save to Backend DB
+
+    // 1. Save to Backend DB (createOrderPayload generates the canonical orderNumber)
     const payload = createOrderPayload(orderData, cartItems, customer?.id);
-    
+
     try {
       const response = await submitOrder(payload);
       console.log('✅ Order saved to Supabase directly');
+
+      // Build local order using IDs from the DB response so state stays in sync
+      const estimatedDelivery = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const newOrder: Order = {
+        id: `order-${Date.now()}`,
+        orderNumber:    response.order.orderNumber,
+        trackingNumber: response.order.trackingNumber,
+        customerName:   `${orderData.firstName} ${orderData.lastName}`,
+        customerEmail:  orderData.email,
+        customerPhone:  orderData.phone,
+        shippingAddress: orderData.address,
+        city:           orderData.city,
+        state:          orderData.state,
+        zipCode:        orderData.zipCode,
+        items:          cartItems,
+        subtotal,
+        tax,
+        deliveryCharge,
+        total,
+        paymentMethod:  orderData.paymentMethod,
+        status:         'processing',
+        createdAt:      new Date().toISOString(),
+        estimatedDelivery,
+      };
+
       setCurrentOrder({ orderNumber: response.order.orderNumber, total });
 
       // 1b. Deduct stock & trigger alarms
@@ -1052,7 +1063,9 @@ const App: React.FC = () => {
         />
       )}
       <main className={`flex-grow ${isAdminRoute ? '' : 'pt-20'}`}>
-        {renderPage()}
+        <Suspense fallback={<PageSpinner />}>
+          {renderPage()}
+        </Suspense>
       </main>
       
       {/* Cart Popup */}
