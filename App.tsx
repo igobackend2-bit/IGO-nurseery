@@ -1128,38 +1128,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-                  className="flex-1 py-4 bg-igo-lime text-igo-dark rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-igo-dark hover:text-white transition-all shadow-lg"
-                >
-                  View Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast System - "Pop up" for Notifications */}
-      {toast && (
-        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-right-10 duration-500">
-          <div className="bg-igo-dark text-white p-5 rounded-[2rem] shadow-2xl border border-white/10 flex items-center gap-4 min-w-[300px] backdrop-blur-xl bg-opacity-95">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${toast.type === 'success' ? 'bg-igo-lime text-igo-dark' : 'bg-blue-500 text-white'}`}>
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div className="flex-grow">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-igo-lime mb-0.5">Notification</p>
-              <p className="text-sm font-bold">{toast.message}</p>
-            </div>
-            <button onClick={() => setToast(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
-              <X className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {!isAdminRoute && <Footer setCurrentPage={handlePageChange} />}
-      {!isAdminRoute && <LeadCapturePopup />}
-    </div>
-  );
-};
-
-export default App;
