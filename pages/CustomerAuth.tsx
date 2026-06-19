@@ -96,31 +96,25 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({
         }
       } else if (mode === 'signup') {
         try {
-          const signupRes = await customerApi.signup({
+          // signup() now always goes through /api/send-otp (Resend-backed),
+          // so it always returns requiresVerification: true
+          await customerApi.signup({
             name: formData.name.trim(),
             email,
             password,
             phone: formData.phone.trim()
           });
 
-          // Confirm email is OFF — Supabase returned a session immediately, log in directly
-          if (signupRes.token && signupRes.customer) {
-            setSuccess('Account created! Taking you to your dashboard...');
-            setTimeout(() => onLogin(signupRes), 1200);
-          } else {
-            // Confirm email is ON — send customer to OTP verification screen
-            setMode('verify');
-            setSuccess('Account created! A 6-digit verification code has been sent to your email.');
-            setTimeout(() => setSuccess(null), 4000);
-            startResendCooldown(60);
-          }
+          setMode('verify');
+          setSuccess('Account created! A 6-digit verification code has been sent to your email.');
+          setTimeout(() => setSuccess(null), 4000);
+          startResendCooldown(60);
         } catch (signupErr: any) {
           const raw: string = signupErr.message || '';
           const isRateLimit = raw.toLowerCase().includes('rate limit') || raw.toLowerCase().includes('too many');
           const isAlreadyExists = raw.toLowerCase().includes('already registered') || raw.toLowerCase().includes('already been registered');
 
           if (isRateLimit) {
-            // Email was likely sent already — move them to verify screen
             setRateLimited(true);
             setMode('verify');
             setError('A verification code was already sent to your email. Please enter it below. If you didn\'t receive it, wait 60 seconds then try again.');
@@ -171,12 +165,17 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const { supabase } = await import('../services/supabaseClient');
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: formData.email.trim(),
+      // Call our Vercel serverless function which uses Resend for reliable delivery
+      const res = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'resend',
+          email: formData.email.trim(),
+        }),
       });
-      if (error) throw new Error(error.message);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not resend code.');
       setSuccess('A new verification code has been sent to your email.');
       setTimeout(() => setSuccess(null), 4000);
       startResendCooldown(60);

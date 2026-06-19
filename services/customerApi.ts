@@ -124,48 +124,26 @@ export const customerApi = {
   },
 
   async signup(data: any) {
-    const { supabase } = await import('./supabaseClient');
-    const { data: authData, error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          name: data.name,
-          phone: data.phone
-        }
-      }
+    // Send signup request to the Vercel serverless function (api/send-otp.js),
+    // which uses Supabase Admin SDK to generate a real OTP and delivers it via Resend.
+    // This bypasses Supabase's unreliable built-in email sender.
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'signup',
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        phone: data.phone,
+      }),
     });
 
-    if (error) throw new Error(error.message);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Signup failed');
 
-    // Upsert customer profile row so it exists for orders/notifications
-    if (authData.user) {
-      const { error: dbError } = await supabase.from('customers').upsert({
-        id: authData.user.id,
-        email: data.email,
-        name: data.name,
-        phone: data.phone
-      }, { onConflict: 'id' });
-      if (dbError && dbError.code !== '23505') {
-        console.error('Customer profile upsert failed:', dbError);
-      }
-    }
-
-    // When "Confirm email" is OFF in Supabase, a session is returned immediately.
-    // Return it so the frontend can log the customer in without an OTP step.
-    if (authData.session) {
-      localStorage.setItem('igo_customer_token', authData.session.access_token);
-      const customer = authData.user ? {
-        id: authData.user.id,
-        email: authData.user.email || '',
-        name: authData.user.user_metadata?.name || data.name || '',
-        phone: authData.user.user_metadata?.phone || data.phone || ''
-      } : null;
-      return { token: authData.session.access_token, customer, requiresVerification: false };
-    }
-
-    // "Confirm email" is ON — customer needs to enter the OTP sent to their inbox.
-    return { message: 'OTP sent to your email.', requiresVerification: true };
+    // OTP sent — customer must verify before getting a session
+    return { message: json.message || 'OTP sent to your email.', requiresVerification: true };
   },
 
   async verifyOtp(data: { email: string; otp: string }) {
