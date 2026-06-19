@@ -27,6 +27,8 @@ const friendlyError = (msg: string, mode: AuthMode): string => {
     return 'Connection issue. Please check your internet and try again.';
   if (m.includes('otp') || m.includes('token') || m.includes('invalid') && m.includes('code'))
     return 'The OTP code is incorrect or has expired. Please request a new one.';
+  if (m.includes('error sending confirmation email'))
+    return 'System Error: Supabase SMTP configuration is failing. Check your Supabase Dashboard → Authentication → SMTP Settings, and ensure your Resend API Key is valid and domain is verified.';
   return msg;
 };
 
