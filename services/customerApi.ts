@@ -150,21 +150,7 @@ export const customerApi = {
       }
     }
 
-    // Step 3: Also send our branded OTP email via otp-mailer.php (Resend)
-    // This runs fire-and-forget — the Supabase OTP is the source of truth.
-    // The mailer.php sends a nicely branded version of the same code.
-    // NOTE: We don't have the raw OTP here (Supabase doesn't expose it to the
-    // anon client), so we send a "check your inbox" branded email instead.
-    fetch('/otp-mailer.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: data.email,
-        name: data.name,
-        subject: 'Verify your IGO Nursery account',
-        html: null, // otp-mailer.php will use Supabase's OTP code path
-      }),
-    }).catch(err => console.warn('[signup] otp-mailer.php fire-and-forget failed:', err));
+
 
     // If email confirmation is OFF, Supabase returns a session immediately
     if (authData.session) {
