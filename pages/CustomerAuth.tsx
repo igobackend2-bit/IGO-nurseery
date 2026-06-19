@@ -96,19 +96,24 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({
         }
       } else if (mode === 'signup') {
         try {
-          // signup() now always goes through /api/send-otp (Resend-backed),
-          // so it always returns requiresVerification: true
-          await customerApi.signup({
+          const signupRes = await customerApi.signup({
             name: formData.name.trim(),
             email,
             password,
             phone: formData.phone.trim()
           });
 
-          setMode('verify');
-          setSuccess('Account created! A 6-digit verification code has been sent to your email.');
-          setTimeout(() => setSuccess(null), 4000);
-          startResendCooldown(60);
+          // Email confirmation OFF — Supabase returned session immediately
+          if (signupRes.token && signupRes.customer) {
+            setSuccess('Account created! Taking you to your dashboard...');
+            setTimeout(() => onLogin(signupRes), 1200);
+          } else {
+            // Email confirmation ON — OTP sent via Supabase → Resend
+            setMode('verify');
+            setSuccess('Account created! A 6-digit verification code has been sent to your email.');
+            setTimeout(() => setSuccess(null), 4000);
+            startResendCooldown(60);
+          }
         } catch (signupErr: any) {
           const raw: string = signupErr.message || '';
           const isRateLimit = raw.toLowerCase().includes('rate limit') || raw.toLowerCase().includes('too many');
@@ -165,17 +170,14 @@ const CustomerAuth: React.FC<CustomerAuthProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      // Call our Vercel serverless function which uses Resend for reliable delivery
-      const res = await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'resend',
-          email: formData.email.trim(),
-        }),
+      // supabase.auth.resend() routes through Supabase SMTP → Resend
+      // (configured in Supabase Dashboard → Authentication → SMTP Settings)
+      const { supabase } = await import('../services/supabaseClient');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: formData.email.trim(),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not resend code.');
+      if (error) throw new Error(error.message);
       setSuccess('A new verification code has been sent to your email.');
       setTimeout(() => setSuccess(null), 4000);
       startResendCooldown(60);

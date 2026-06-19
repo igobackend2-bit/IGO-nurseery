@@ -124,26 +124,62 @@ export const customerApi = {
   },
 
   async signup(data: any) {
-    // Send signup request to the Vercel serverless function (api/send-otp.js),
-    // which uses Supabase Admin SDK to generate a real OTP and delivers it via Resend.
-    // This bypasses Supabase's unreliable built-in email sender.
-    const res = await fetch('/api/send-otp', {
+    const { supabase } = await import('./supabaseClient');
+
+    // Step 1: Create the Supabase auth user (triggers OTP via Supabase SMTP → Resend)
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: { name: data.name, phone: data.phone }
+      }
+    });
+
+    if (error) throw new Error(error.message);
+
+    // Step 2: Upsert customer profile row
+    if (authData.user) {
+      const { error: dbError } = await supabase.from('customers').upsert({
+        id: authData.user.id,
+        email: data.email,
+        name: data.name,
+        phone: data.phone
+      }, { onConflict: 'id' });
+      if (dbError && dbError.code !== '23505') {
+        console.error('[signup] Customer profile upsert failed:', dbError);
+      }
+    }
+
+    // Step 3: Also send our branded OTP email via otp-mailer.php (Resend)
+    // This runs fire-and-forget — the Supabase OTP is the source of truth.
+    // The mailer.php sends a nicely branded version of the same code.
+    // NOTE: We don't have the raw OTP here (Supabase doesn't expose it to the
+    // anon client), so we send a "check your inbox" branded email instead.
+    fetch('/otp-mailer.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'signup',
-        email: data.email,
-        password: data.password,
+        to: data.email,
         name: data.name,
-        phone: data.phone,
+        subject: 'Verify your IGO Nursery account',
+        html: null, // otp-mailer.php will use Supabase's OTP code path
       }),
-    });
+    }).catch(err => console.warn('[signup] otp-mailer.php fire-and-forget failed:', err));
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Signup failed');
+    // If email confirmation is OFF, Supabase returns a session immediately
+    if (authData.session) {
+      localStorage.setItem('igo_customer_token', authData.session.access_token);
+      const customer = authData.user ? {
+        id: authData.user.id,
+        email: authData.user.email || '',
+        name: authData.user.user_metadata?.name || data.name || '',
+        phone: authData.user.user_metadata?.phone || data.phone || ''
+      } : null;
+      return { token: authData.session.access_token, customer, requiresVerification: false };
+    }
 
-    // OTP sent — customer must verify before getting a session
-    return { message: json.message || 'OTP sent to your email.', requiresVerification: true };
+    // Email confirmation is ON — OTP sent via Supabase → Resend SMTP
+    return { message: 'OTP sent to your email.', requiresVerification: true };
   },
 
   async verifyOtp(data: { email: string; otp: string }) {
