@@ -178,9 +178,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
                 {/* Hero Main Image Circle */}
                 <div className="w-[80%] h-[80%] mx-auto rounded-full border-[20px] border-white/5 overflow-hidden p-4">
-                  <img 
+                  <img
                     src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=800"
                     className="w-full h-full object-cover rounded-full"
+                    loading="lazy"
+                    decoding="async"
                     alt="Premium nursery plant grown at IGO Nursery — healthy and lab-certified"
                   />
                 </div>
@@ -218,7 +220,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             ].map((proj, i) => (
                 <div key={i} className="flex-shrink-0 w-80 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group cursor-pointer hover:shadow-xl transition-all">
                     <div className="h-48 relative overflow-hidden">
-                        <img src={proj.img} alt={proj.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <img src={proj.img} alt={proj.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         <div className="absolute top-4 right-4 bg-igo-dark/80 backdrop-blur px-3 py-1 rounded-full text-[8px] font-black text-white uppercase tracking-widest">{proj.status}</div>
                     </div>
                     <div className="p-6">
@@ -284,7 +286,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           ].map((card, idx) => (
             <div key={idx} className="group relative bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 border border-gray-100 flex flex-col h-full">
               <div className="h-64 overflow-hidden relative">
-                <img src={card.img} alt={card.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                <img src={card.img} alt={card.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                 <div className="absolute top-6 left-6 px-4 py-1 rounded-full bg-igo-dark/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest">{card.tagline}</div>
               </div>
               <div className="p-10 flex-grow flex flex-col justify-between">
@@ -333,6 +335,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               src="/images/indoor/monstera.png"
               alt="Monstera indoor plant — featured from IGO Nursery product collection"
               className="w-full h-[320px] md:h-[380px] object-cover rounded-3xl border border-white/10"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>
@@ -379,8 +383,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
             <div className="relative">
               <div className="grid grid-cols-2 gap-4">
-                <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover" alt="IGO Nursery AgriTech lab — soil and plant research facility" />
-                <img src="https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover mt-12" alt="Precision agriculture trials at IGO Nursery Muttukadu campus" />
+                <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover" loading="lazy" decoding="async" alt="IGO Nursery AgriTech lab — soil and plant research facility" />
+                <img src="https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?auto=format&fit=crop&q=80&w=600" className="rounded-3xl w-full h-full object-cover mt-12" loading="lazy" decoding="async" alt="Precision agriculture trials at IGO Nursery Muttukadu campus" />
               </div>
               {/* Telemetry Box */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-igo-lime rounded-full p-1 shadow-[0_0_80px_rgba(132,204,22,0.4)] animate-pulse flex items-center justify-center">

@@ -155,6 +155,12 @@ export const SEO_CONFIGS = {
     canonical: '/cart',
     noIndex: true,
   },
+  notFound: {
+    title: 'Page Not Found | IGO Nursery',
+    description: 'The page you are looking for could not be found. Browse plants, landscaping services, and more at IGO Nursery.',
+    canonical: '/',
+    noIndex: true,
+  },
   checkout: {
     title: 'Checkout | IGO Nursery',
     description: 'Complete your plant order with secure checkout.',

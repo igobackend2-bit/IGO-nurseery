@@ -32,6 +32,7 @@ const AdminInventory   = lazy(() => import('./pages/AdminInventory'));
 const AdminCustomers   = lazy(() => import('./pages/AdminCustomers'));
 const CustomerAuth     = lazy(() => import('./pages/CustomerAuth'));
 const CustomerProfile  = lazy(() => import('./pages/CustomerProfile'));
+const NotFound         = lazy(() => import('./pages/NotFound'));
 import { customerApi } from './services/customerApi';
 import { productApi } from './services/productApi';
 import { Customer, Notification, CartItem, Page, StoreProduct, Product as NurseryProduct, Order } from './types';
@@ -334,11 +335,15 @@ const parseLocationToRoute = (): ParsedRoute => {
     };
   }
 
+  // Unknown/unmatched URL — show a real 404 instead of silently rendering
+  // the homepage. Keep the original (bad) path in the address bar rather
+  // than rewriting it to '/', so this doesn't look like a valid page to
+  // search engines or to the visitor.
   return {
-    page: Page.Home,
+    page: Page.NotFound,
     productSlug: null,
     knowledgeArticleId: null,
-    canonicalPath: '/',
+    canonicalPath: normalized,
   };
 };
 
@@ -365,7 +370,10 @@ const App: React.FC = () => {
   }, []);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    const savedAdmin = localStorage.getItem('isAdmin');
+    // sessionStorage (not localStorage) so the admin login is required again
+    // every time a new browser session starts — closing the tab/browser
+    // clears this, unlike localStorage which persisted the login forever.
+    const savedAdmin = sessionStorage.getItem('isAdmin');
     return savedAdmin === 'true';
   });
   const [currentOrder, setCurrentOrder] = useState<{ orderNumber: string; total: number } | null>(null);
@@ -521,7 +529,7 @@ const App: React.FC = () => {
 
   const handleAdminLogout = () => {
     setIsAdmin(false);
-    localStorage.removeItem('isAdmin');
+    sessionStorage.removeItem('isAdmin');
     console.log(`🔐 Admin logged out`);
     navigateTo('/');
   };
@@ -532,7 +540,7 @@ const App: React.FC = () => {
 
     if (normalizedEmail === 'admin@igo.local' && normalizedPass === 'Admin@123') {
       setIsAdmin(true);
-      localStorage.setItem('isAdmin', 'true');
+      sessionStorage.setItem('isAdmin', 'true');
       navigateTo('/admin-orders');
       return true;
     }
@@ -1025,6 +1033,13 @@ const App: React.FC = () => {
           <AdminLogin
             defaultEmail="admin@igo.local"
             onLogin={handleAdminLogin}
+          />
+        );
+      case Page.NotFound:
+        return (
+          <NotFound
+            onNavigateHome={(e) => { e.preventDefault(); handlePageChange(Page.Home); }}
+            onNavigateShop={(e) => { e.preventDefault(); handlePageChange(Page.Shop); }}
           />
         );
       default:

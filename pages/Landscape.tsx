@@ -294,10 +294,12 @@ const Landscape: React.FC = () => {
                   className="group cursor-pointer bg-white rounded-[3rem] p-4 border border-gray-50 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
                 >
                     <div className="aspect-[4/5] rounded-[2.5rem] overflow-hidden mb-8 relative">
-                        <img 
-                          src={s.img} 
-                          alt={s.title} 
-                          className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" 
+                        <img
+                          src={s.img}
+                          alt={s.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
                            <span className="text-white text-[10px] font-black uppercase tracking-[0.3em]">View Full Gallery</span>
@@ -392,7 +394,7 @@ const Landscape: React.FC = () => {
                 </div>
                 <div className="mt-12 flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-md">
-                    <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
+                    <img src={t.avatar} alt={t.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <div className="font-black text-igo-dark uppercase text-xs tracking-widest">{t.name}</div>
@@ -408,7 +410,7 @@ const Landscape: React.FC = () => {
       {/* Booking Form Section */}
       <section ref={bookingRef} className="py-32 bg-igo-dark relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
-          <img src="https://images.unsplash.com/photo-1590054790395-63ad360ca217?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" alt="Form Background" />
+          <img src="https://images.unsplash.com/photo-1590054790395-63ad360ca217?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" loading="lazy" decoding="async" alt="Form Background" />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-20 items-center relative z-10">
@@ -564,9 +566,11 @@ const Landscape: React.FC = () => {
             <div className="grid lg:grid-cols-2">
               {/* Visual Side */}
               <div className="relative h-[400px] lg:h-auto overflow-hidden">
-                <img 
-                  src={CASE_STUDIES[selectedCaseStudy].bg} 
-                  className="w-full h-full object-cover animate-pulse-slow" 
+                <img
+                  src={CASE_STUDIES[selectedCaseStudy].bg}
+                  className="w-full h-full object-cover animate-pulse-slow"
+                  loading="lazy"
+                  decoding="async"
                   alt={`IGO Nursery case study — ${CASE_STUDIES[selectedCaseStudy].title} landscape project`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-igo-dark/80 via-transparent to-transparent" />

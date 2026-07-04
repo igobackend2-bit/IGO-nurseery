@@ -34,7 +34,8 @@ export enum Page {
   MailHub = 'mail-hub',
   PrivacyPolicy = 'privacy-policy',
   TermsOfService = 'terms-of-service',
-  ShippingInfo = 'shipping-info'
+  ShippingInfo = 'shipping-info',
+  NotFound = 'not-found'
 }
 
 export interface Lead {

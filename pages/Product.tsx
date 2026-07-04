@@ -324,7 +324,7 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
                   onClick={(e) => { e.preventDefault(); openProductPage(item.slug); }}
                   className="bg-white border border-gray-100 rounded-2xl p-4 text-left hover:shadow-lg transition-all block no-underline"
                 >
-                  <img src={item.image || getProductImagePath((item as any).imageFile)} alt={item.name} className="w-full h-40 object-cover rounded-xl mb-4" />
+                  <img src={item.image || getProductImagePath((item as any).imageFile)} alt={item.name} loading="lazy" decoding="async" className="w-full h-40 object-cover rounded-xl mb-4" />
                   <h4 className="font-black text-igo-dark mb-1">{item.name}</h4>
                   <div className="text-sm text-igo-muted">{formatCurrency(item.price)}</div>
                 </a>
@@ -378,6 +378,8 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
                     <img
                       src={getProductImagePath(product.imageFile)}
                       alt={product.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />

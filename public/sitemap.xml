@@ -5,71 +5,83 @@
   <!-- Homepage — highest priority -->
   <url>
     <loc>https://www.igonursery.com/</loc>
-    <lastmod>2026-05-21</lastmod>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Shop / Plants -->
   <url>
-    <loc>https://www.igonursery.com/#shop</loc>
-    <lastmod>2026-05-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Product Page -->
-  <url>
-    <loc>https://www.igonursery.com/#product</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/store</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Landscape Studio -->
   <url>
-    <loc>https://www.igonursery.com/#landscape</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/landscape</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- AMC Program -->
   <url>
-    <loc>https://www.igonursery.com/#amc</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/amc</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Knowledge Hub -->
   <url>
-    <loc>https://www.igonursery.com/#knowledge</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/knowledge</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
+  <!-- Knowledge Articles -->
+  <url>
+    <loc>https://www.igonursery.com/knowledge/climate-resilience-guide</loc>
+    <lastmod>2026-07-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.igonursery.com/knowledge/heritage-biophilic-landscapes</loc>
+    <lastmod>2026-07-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.igonursery.com/knowledge/soil-health-essentials</loc>
+    <lastmod>2026-07-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Garden Assistant -->
   <url>
-    <loc>https://www.igonursery.com/#assistant</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/assistant</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- Lab R&D -->
   <url>
-    <loc>https://www.igonursery.com/#lab</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/lab</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- Visit Our Campus -->
   <url>
-    <loc>https://www.igonursery.com/#visit</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://www.igonursery.com/visit</loc>
+    <lastmod>2026-07-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

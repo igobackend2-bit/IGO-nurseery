@@ -114,7 +114,7 @@ const Lab: React.FC = () => {
         <div className="grid lg:grid-cols-2 gap-32 items-center">
           <div className="relative">
             <div className="absolute -top-10 -left-10 w-40 h-40 bg-igo-lime/10 rounded-full blur-3xl"></div>
-            <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=800" className="rounded-[3rem] relative z-10 shadow-2xl" alt="Lab Work" />
+            <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=800" className="rounded-[3rem] relative z-10 shadow-2xl" loading="lazy" decoding="async" alt="Lab Work" />
             <div className="absolute -bottom-10 -right-10 bg-igo-dark p-10 rounded-[2.5rem] shadow-2xl z-20 text-white space-y-4 max-w-xs">
               <Cpu className="text-igo-lime w-12 h-12" />
               <h4 className="text-xl font-black uppercase tracking-tighter leading-tight">IoT Sensor Network Integration</h4>

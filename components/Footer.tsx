@@ -1,7 +1,8 @@
 
-import React from 'react';
-import { Facebook, Instagram, Twitter, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, Loader2, CheckCircle2 } from 'lucide-react';
 import { Page } from '../types';
+import { customerApi } from '../services/customerApi';
 
 interface FooterProps {
   setCurrentPage: (p: Page) => void;
@@ -11,6 +12,32 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
   const handleNav = (p: Page) => (e: React.MouseEvent) => {
     e.preventDefault();
     setCurrentPage(p);
+  };
+
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletterEmail.trim())) {
+      setNewsletterStatus('error');
+      return;
+    }
+    setNewsletterStatus('submitting');
+    try {
+      await customerApi.submitLead({
+        type: 'general-inquiry',
+        customerName: 'Newsletter Signup',
+        customerEmail: newsletterEmail.trim(),
+        reason: 'Footer newsletter signup — “Join the IGO Collective”',
+        status: 'new',
+      });
+      setNewsletterStatus('success');
+      setNewsletterEmail('');
+    } catch (err) {
+      console.error('Newsletter signup failed:', err);
+      setNewsletterStatus('error');
+    }
   };
 
   return (
@@ -32,6 +59,7 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
             <div className="flex gap-4">
               <a href="https://www.instagram.com/igonursery/?hl=en" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Instagram className="w-5 h-5" /></a>
               <a href="https://www.facebook.com/profile.php?id=61589516307558&rdid=M8Kh1LlBILkpO63x&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1HvaF6anie%2F#" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Facebook className="w-5 h-5" /></a>
+              <a href="https://x.com/igoagritechfarm" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/5 rounded-lg hover:bg-igo-lime hover:text-igo-dark transition-colors"><Twitter className="w-5 h-5" /></a>
             </div>
           </div>
 
@@ -72,21 +100,44 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
           <div>
             <h4 className="text-lg font-bold mb-8 text-igo-lime uppercase tracking-widest text-xs">Get in Touch</h4>
             <ul className="space-y-4 text-gray-400">
-              <li className="flex items-center gap-3 hover:text-igo-lime transition-colors cursor-pointer">
+              <li className="flex items-center gap-3 hover:text-igo-lime transition-colors">
                 <Mail className="w-5 h-5 text-igo-lime" />
-                <span>hello@igonursery.com</span>
+                <a href="mailto:igonursery@gmail.com" className="no-underline hover:text-igo-lime">igonursery@gmail.com</a>
               </li>
-              <li className="flex items-center gap-3 hover:text-igo-lime transition-colors cursor-pointer">
+              <li className="flex items-center gap-3 hover:text-igo-lime transition-colors">
                 <Phone className="w-5 h-5 text-igo-lime" />
-                <span>+91 98400 00000</span>
+                <a href="tel:+919444444444" className="no-underline hover:text-igo-lime">+91 94444 44444</a>
               </li>
               <li className="mt-8">
                 <div className="bg-white/5 p-6 rounded-2xl">
                   <h5 className="font-bold text-white mb-2 text-sm">Join the IGO Collective</h5>
-                  <div className="flex gap-2">
-                    <input type="email" placeholder="Email" className="bg-transparent border border-white/20 px-4 py-2 rounded-lg text-sm flex-grow focus:outline-none focus:border-igo-lime" />
-                    <button className="bg-igo-lime text-igo-dark px-4 py-2 rounded-lg font-bold hover:bg-white transition-colors">Join</button>
-                  </div>
+                  {newsletterStatus === 'success' ? (
+                    <p className="text-xs font-bold text-igo-lime flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" /> Thanks — we&#x2019;ll be in touch!
+                    </p>
+                  ) : (
+                    <form onSubmit={handleNewsletterSubmit} noValidate>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          value={newsletterEmail}
+                          onChange={(e) => { setNewsletterEmail(e.target.value); if (newsletterStatus === 'error') setNewsletterStatus('idle'); }}
+                          className={`bg-transparent border px-4 py-2 rounded-lg text-sm flex-grow focus:outline-none focus:border-igo-lime ${newsletterStatus === 'error' ? 'border-red-400' : 'border-white/20'}`}
+                        />
+                        <button
+                          type="submit"
+                          disabled={newsletterStatus === 'submitting'}
+                          className="bg-igo-lime text-igo-dark px-4 py-2 rounded-lg font-bold hover:bg-white transition-colors disabled:opacity-60 flex items-center gap-2"
+                        >
+                          {newsletterStatus === 'submitting' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join'}
+                        </button>
+                      </div>
+                      {newsletterStatus === 'error' && (
+                        <p className="text-[11px] text-red-400 mt-2">Please enter a valid email address.</p>
+                      )}
+                    </form>
+                  )}
                 </div>
               </li>
             </ul>

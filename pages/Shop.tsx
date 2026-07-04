@@ -158,6 +158,8 @@ const Shop: React.FC<ShopProps> = ({ products, addToCart, onOpenProduct }) => {
                 <img
                   src={product.image}
                   alt={product.name}
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = '/images/product-fallback.png';
