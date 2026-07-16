@@ -124,7 +124,7 @@ const IGO_BRANDS = [
     category: 'Franchise',
     logo: '/images/brands/18.jpg',
     description: 'Expanding our successful agricultural models through comprehensive franchise partnership opportunities.',
-    active: false,
+    active: true,
   },
   {
     id: 'igo-crop-care',

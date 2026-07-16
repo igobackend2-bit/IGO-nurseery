@@ -280,6 +280,13 @@ const Product: React.FC<ProductProps> = ({ products = [], selectedSlug = null, o
                     <p className="text-xs font-bold text-green-800 leading-relaxed">
                       In Stock: High-health specimen verified by IGO Lab. Ready for immediate dispatch from our regional hub.
                     </p>
+                    {typeof selectedProduct.stock === 'number' && selectedProduct.stock > 0 && (
+                      <p className={`text-xs font-black uppercase tracking-widest mt-3 ${selectedProduct.stock <= 5 ? 'text-red-600' : 'text-green-700'}`}>
+                        {selectedProduct.stock <= 5
+                          ? `Only ${selectedProduct.stock} left in stock — order soon`
+                          : `${selectedProduct.stock} in stock`}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
