@@ -125,7 +125,6 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
             : 'border-b border-gray-100 bg-cover bg-center'
         }`}
         style={!isScrolled ? { backgroundImage: "linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)), url('/images/branding/header-bg.png')" } : {}}
-        <meta name="google-site-verification" content="eXtKF0HcqFnHnEU-GU9NTUTWw6ER5HZr3_cQlcxxgJQ" />
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-24 gap-4 xl:gap-8">

@@ -1,8 +1,18 @@
 User-agent: *
 Allow: /
 
-Disallow: /admin/
-Disallow: /admin-login/
+Disallow: /admin-login
+Disallow: /admin-orders
+Disallow: /admin-leads
+Disallow: /admin-visitor-leads
+Disallow: /admin-products
+Disallow: /admin-overview
+Disallow: /admin-customers
+Disallow: /admin-profile
+Disallow: /admin-inventory
+Disallow: /admin-notifications
+Disallow: /add-product
+Disallow: /mail-hub
 Disallow: /api/
 Disallow: /private/
 
